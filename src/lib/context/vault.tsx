@@ -1,17 +1,29 @@
 "use client";
 
 import { createContext, useContext, useCallback } from "react";
-import { PublicKey, UInt64, Mina, AccountUpdate, PrivateKey } from "o1js";
+import {
+  PublicKey,
+  UInt64,
+  Mina,
+  AccountUpdate,
+  PrivateKey,
+  JsonProof,
+} from "o1js";
 import { useCloudWorker } from "./cloud-worker";
-import { TransactionType } from "@/lib/types/vault";
-import { CloudWorkerResponse, CloudWorkerTask } from "@/lib/types/cloud-worker";
+
+import { CloudWorkerResponse } from "@/lib/types/cloud-worker";
 import { fetchMinaAccount } from "zkcloudworker";
 import { useAccount } from "./account";
 import { useTransaction } from "./transaction";
 import { useContracts } from "./contracts";
-import { useVaultManager } from "./vault-manager";
 import { useLatestProof } from "../hooks/useLatestProof";
-import { MinaPriceInput, oracleAggregationVk } from "zkusd";
+import {
+  MinaPriceInput,
+  oracleAggregationVk,
+  VaultTransactionType,
+  VaultTransactionArgs,
+} from "zkusd";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * This context provides only the contract calls for creating and interacting with vaults,
@@ -48,6 +60,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const { prepareTransaction, serializeTransaction } = useTransaction();
   const { data: latestProof } = useLatestProof();
   const { account } = useAccount();
+  const queryClient = useQueryClient();
   /*
     addVaultAddress (or createAndTrackVault) is from the vault-manager.
     addVaultAddress: (vaultAddr: string) => void 
@@ -62,10 +75,10 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     memo,
     args,
   }: {
-    task: CloudWorkerTask;
+    task: VaultTransactionType;
     tx: Mina.Transaction<false, false>;
-    memo: TransactionType;
-    args: any;
+    memo: VaultTransactionType;
+    args: VaultTransactionArgs[VaultTransactionType];
   }) => {
     try {
       const serializedTx = serializeTransaction(tx);
@@ -115,7 +128,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const createVault = useCallback(
     async (vaultPrivateKey: PrivateKey) => {
-      const memo = TransactionType.CREATE_VAULT;
+      const memo = VaultTransactionType.CREATE_VAULT;
       const vaultAddress = vaultPrivateKey.toPublicKey();
       let newAccounts = 0;
 
@@ -145,7 +158,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Broadcast
       const response = await signAndProve({
-        task: TransactionType.CREATE_VAULT,
+        task: VaultTransactionType.CREATE_VAULT,
         tx,
         memo,
         args: {
@@ -166,7 +179,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     async (vaultAddress: PublicKey, amount: UInt64) => {
       try {
         // Prepare the transaction via engine or building it yourself
-        const memo = TransactionType.DEPOSIT_COLLATERAL;
+        const memo = VaultTransactionType.DEPOSIT_COLLATERAL;
 
         const tx = await prepareTransaction(async () => {
           await engine.depositCollateral(vaultAddress, amount);
@@ -177,18 +190,20 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         // So let's replicate the signAndProve pattern:
         // if you prefer a "prepareTransaction" approach, you can do that as well.
         const response = await signAndProve({
-          task: TransactionType.DEPOSIT_COLLATERAL,
+          task: VaultTransactionType.DEPOSIT_COLLATERAL,
           tx: tx as any,
           memo,
           args: {
             vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
+            collateralAmount: amount.toString(),
           },
         });
 
         // On success, we can optionally invalidate the query in vault-manager
         // (the vault manager or the component can do something like
-        // queryClient.invalidateQueries(["vaultState", vaultAddress.toBase58()]) )
+        queryClient.invalidateQueries({
+          queryKey: ["vaultState", vaultAddress.toBase58()],
+        });
 
         return response;
       } catch (error) {
@@ -204,14 +219,18 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const mintZkUsd = useCallback(
     async (vaultAddress: PublicKey, amount: UInt64) => {
       try {
-        const memo = TransactionType.MINT_ZKUSD;
+        const memo = VaultTransactionType.MINT_ZKUSD;
+
+        if (!latestProof) {
+          throw new Error("No latest proof found");
+        }
 
         await fetchMinaAccount({
           publicKey: engine.address,
         });
 
         const minaPriceInput = new MinaPriceInput({
-          proof: latestProof!,
+          proof: latestProof,
           verificationKey: oracleAggregationVk,
         });
 
@@ -221,18 +240,25 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         }, memo);
         console.timeEnd("preparing transaction with proof");
 
+        console.log(
+          "Providing proof for block",
+          latestProof.toJSON().publicInput[0]
+        );
+
         const response = await signAndProve({
-          task: TransactionType.MINT_ZKUSD,
+          task: VaultTransactionType.MINT_ZKUSD,
           tx: tx as any,
           memo,
           args: {
             vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
-            minaPriceProof: latestProof?.toJSON() || {},
+            zkusdAmount: amount.toString(),
+            minaPriceProof: latestProof.toJSON(),
           },
         });
 
-        // Same note as depositCollateral about invalidating queries
+        queryClient.invalidateQueries({
+          queryKey: ["vaultState", vaultAddress.toBase58()],
+        });
 
         return response;
       } catch (error) {
@@ -240,20 +266,24 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [engine, signAndProve]
+    [engine, signAndProve, latestProof]
   );
 
   const redeemCollateral = useCallback(
     async (vaultAddress: PublicKey, amount: UInt64) => {
       try {
-        const memo = TransactionType.REDEEM_COLLATERAL;
+        const memo = VaultTransactionType.REDEEM_COLLATERAL;
+
+        if (!latestProof) {
+          throw new Error("No latest proof found");
+        }
 
         await fetchMinaAccount({
           publicKey: engine.address,
         });
 
         const minaPriceInput = new MinaPriceInput({
-          proof: latestProof!,
+          proof: latestProof,
           verificationKey: oracleAggregationVk,
         });
 
@@ -264,14 +294,18 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         console.timeEnd("preparing redeem collateral transaction with proof");
 
         const response = await signAndProve({
-          task: TransactionType.REDEEM_COLLATERAL,
+          task: VaultTransactionType.REDEEM_COLLATERAL,
           tx: tx as any,
           memo,
           args: {
             vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
-            minaPriceProof: latestProof?.toJSON() || {},
+            collateralAmount: amount.toString(),
+            minaPriceProof: latestProof.toJSON(),
           },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["vaultState", vaultAddress.toBase58()],
         });
 
         return response;
@@ -286,7 +320,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const burnZkUsd = useCallback(
     async (vaultAddress: PublicKey, amount: UInt64) => {
       try {
-        const memo = TransactionType.BURN_ZKUSD;
+        const memo = VaultTransactionType.BURN_ZKUSD;
 
         // Fetch the engine account state
         await fetchMinaAccount({
@@ -300,13 +334,17 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         console.timeEnd("preparing burn zkUSD transaction");
 
         const response = await signAndProve({
-          task: TransactionType.BURN_ZKUSD,
+          task: VaultTransactionType.BURN_ZKUSD,
           tx: tx as any,
           memo,
           args: {
             vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
+            zkusdAmount: amount.toString(),
           },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["vaultState", vaultAddress.toBase58()],
         });
 
         return response;
@@ -321,15 +359,18 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const liquidate = useCallback(
     async (vaultAddress: PublicKey) => {
       try {
-        const memo = TransactionType.LIQUIDATE;
+        const memo = VaultTransactionType.LIQUIDATE;
 
-        // Fetch the engine account state
+        if (!latestProof) {
+          throw new Error("No latest proof found");
+        }
+
         await fetchMinaAccount({
           publicKey: engine.address,
         });
 
         const minaPriceInput = new MinaPriceInput({
-          proof: latestProof!,
+          proof: latestProof,
           verificationKey: oracleAggregationVk,
         });
 
@@ -340,13 +381,17 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         console.timeEnd("preparing liquidate transaction with proof");
 
         const response = await signAndProve({
-          task: TransactionType.LIQUIDATE,
+          task: VaultTransactionType.LIQUIDATE,
           tx: tx as any,
           memo,
           args: {
             vaultAddress: vaultAddress.toBase58(),
-            minaPriceProof: latestProof?.toJSON() || {},
+            minaPriceProof: latestProof.toJSON(),
           },
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["vaultState", vaultAddress.toBase58()],
         });
 
         return response;

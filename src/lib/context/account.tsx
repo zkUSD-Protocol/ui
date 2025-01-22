@@ -2,7 +2,7 @@
 
 import { PublicKey } from "o1js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { formatDisplayAccount } from "@/lib/utils";
+import { formatDisplayAccount } from "@/lib/utils/index";
 
 interface AccountContextProps {
   account: PublicKey | null;

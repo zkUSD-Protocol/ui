@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { PublicKey } from "o1js";
+import { PublicKey, PrivateKey } from "o1js";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useVault } from "./vault"; // from your existing vault.tsx
 import { fetchVaultState } from "@/lib/helpers/fetchVaultState";
@@ -26,11 +26,11 @@ export interface VaultOnChainState {
 }
 
 interface VaultManagerContextProps {
-  vaultAddresses: string[]; // each is a base58 string
-  createNewVault: () => Promise<void>;
+  vaultAddresses: string[];
+  generateVaultAddress: () => { privateKey: PrivateKey; address: string };
+  createNewVault: (privateKey: PrivateKey) => Promise<void>;
   removeVaultAddress: (vaultAddress: string) => void;
-  // For retrieving the on-chain data about a vault,
-  // could just use React Query hooks directly, or include below method:
+  importVaultAddress: (vaultAddress: string) => void;
   getVaultQuery: (
     vaultAddress: string
   ) => ReturnType<typeof useQuery<VaultOnChainState>>;
@@ -77,33 +77,41 @@ export function VaultManagerProvider({
   }, [vaultAddresses]);
 
   /**
-   * Create a new vault and track it in our local storage array
+   * Generate a new vault address from a random private key
    */
-  const createNewVault = useCallback(async () => {
-    try {
-      // createVault in your existing VaultProvider returns a CloudWorkerResponse
-      // but note that you must internally generate a PrivateKey and sign the createVault tx
+  const generateVaultAddress = useCallback(() => {
+    const vaultPrivateKey = PrivateKey.random();
+    const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
+    return { privateKey: vaultPrivateKey, address: vaultAddress };
+  }, []);
 
-      // Example approach:
-      const { PrivateKey } = await import("o1js");
-      const vaultPrivateKey = PrivateKey.random();
-      const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
+  /**
+   * Create a new vault with a specific private key and track it in our local storage array
+   */
+  const createNewVault = useCallback(
+    async (vaultPrivateKey: PrivateKey) => {
+      try {
+        const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
-      // createVault triggers the contract call
-      // then store the vault address in local state
-      const response = await createVault(vaultPrivateKey);
-      if (response.success) {
-        setVaultAddresses((prev) =>
-          Array.from(new Set([...prev, vaultAddress]))
-        );
-        console.log("Vault created successfully:", vaultAddress);
-      } else {
-        console.error("Failed to create vault:", response.error);
+        // Create the vault using the provided private key
+        const response = await createVault(vaultPrivateKey);
+
+        if (response.success) {
+          // Add to tracked addresses only after successful creation
+          setVaultAddresses((prev) =>
+            Array.from(new Set([...prev, vaultAddress]))
+          );
+          console.log("Vault created successfully:", vaultAddress);
+        } else {
+          throw new Error(response.error || "Failed to create vault");
+        }
+      } catch (error) {
+        console.error("Error creating vault:", error);
+        throw error; // Re-throw to handle in the component
       }
-    } catch (error) {
-      console.error("Error creating vault:", error);
-    }
-  }, [createVault]);
+    },
+    [createVault]
+  );
 
   /**
    * We can easily remove a vault address from local storage if wanted.
@@ -113,8 +121,22 @@ export function VaultManagerProvider({
   }, []);
 
   /**
+   * Import a new vault address to track
+   */
+  const importVaultAddress = useCallback((vaultAddress: string) => {
+    setVaultAddresses((prev) => {
+      // Check if address already exists
+      if (prev.includes(vaultAddress)) {
+        return prev;
+      }
+      // Add new address to array
+      return [...prev, vaultAddress];
+    });
+  }, []);
+
+  /**
    * For each vault address, we'll define a function returning a custom
-   * React Query hook that fetches the vault’s on-chain state.
+   * React Query hook that fetches the vault's on-chain state.
    *
    * This approach returns useQuery directly. Then your components can do:
    *    const { data, isLoading } = getVaultQuery(vaultAddress);
@@ -148,8 +170,10 @@ export function VaultManagerProvider({
     <VaultManagerContext.Provider
       value={{
         vaultAddresses,
+        generateVaultAddress,
         createNewVault,
         removeVaultAddress,
+        importVaultAddress,
         getVaultQuery,
       }}
     >

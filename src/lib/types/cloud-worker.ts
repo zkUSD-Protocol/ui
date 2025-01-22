@@ -1,9 +1,7 @@
-import { TransactionType } from "./vault";
-
-export type CloudWorkerTask = TransactionType;
+import { VaultTransactionType } from "zkusd";
 
 export interface CloudWorkerRequest {
-  task: CloudWorkerTask;
+  task: VaultTransactionType;
   args: string; // JSON stringified arguments
   transactions?: string[];
 }

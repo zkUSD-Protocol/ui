@@ -1,7 +1,5 @@
 import { Metadata } from "next";
 import { Providers } from "@/lib/context";
-import "./globals.css";
-
 export const metadata: Metadata = {
   title: "zkUSD",
   description: "Stablecoin",
@@ -13,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head></head>
       <body>
         <Providers>{children}</Providers>

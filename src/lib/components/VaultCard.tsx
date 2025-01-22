@@ -1,6 +1,11 @@
+"use client";
 import { useVaultManager } from "@/lib/context/vault-manager";
-import { formatDisplayAccount } from "@/lib/utils";
-import { TransactionType } from "@/lib/types/vault";
+import {
+  formatDisplayAccount,
+  formatMinaAmount,
+  toRawMinaAmount,
+} from "@/lib/utils/index";
+import { VaultTransactionType } from "zkusd";
 import { useState } from "react";
 import { useVault } from "@/lib/context/vault";
 import { PublicKey, UInt64 } from "o1js";
@@ -16,23 +21,26 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
     liquidate,
   } = useVault();
   const [showAmountInput, setShowAmountInput] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState({
+    raw: "",
+    mina: "",
+  });
   const [activeTransaction, setActiveTransaction] =
-    useState<TransactionType | null>(null);
+    useState<VaultTransactionType | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleTransaction = async (type: TransactionType) => {
+  const handleTransaction = async (type: VaultTransactionType) => {
     if (
       [
-        TransactionType.DEPOSIT_COLLATERAL,
-        TransactionType.REDEEM_COLLATERAL,
-        TransactionType.MINT_ZKUSD,
-        TransactionType.BURN_ZKUSD,
+        VaultTransactionType.DEPOSIT_COLLATERAL,
+        VaultTransactionType.REDEEM_COLLATERAL,
+        VaultTransactionType.MINT_ZKUSD,
+        VaultTransactionType.BURN_ZKUSD,
       ].includes(type)
     ) {
       setActiveTransaction(type);
       setShowAmountInput(true);
-    } else if (type === TransactionType.LIQUIDATE) {
+    } else if (type === VaultTransactionType.LIQUIDATE) {
       try {
         setIsProcessing(true);
         setActiveTransaction(type);
@@ -53,29 +61,43 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
       `Executing ${activeTransaction} with amount ${amount} for vault ${vaultAddr}`
     );
     setShowAmountInput(false);
-    setAmount("");
+    setAmount({ raw: "", mina: "" });
     setActiveTransaction(null);
 
     switch (activeTransaction) {
-      case TransactionType.DEPOSIT_COLLATERAL:
-        depositCollateral(PublicKey.fromBase58(vaultAddr), UInt64.from(amount));
+      case VaultTransactionType.DEPOSIT_COLLATERAL:
+        depositCollateral(
+          PublicKey.fromBase58(vaultAddr),
+          UInt64.from(amount.raw)
+        );
         break;
-      case TransactionType.MINT_ZKUSD:
-        mintZkUsd(PublicKey.fromBase58(vaultAddr), UInt64.from(amount));
+      case VaultTransactionType.MINT_ZKUSD:
+        mintZkUsd(PublicKey.fromBase58(vaultAddr), UInt64.from(amount.raw));
         break;
-      case TransactionType.REDEEM_COLLATERAL:
-        redeemCollateral(PublicKey.fromBase58(vaultAddr), UInt64.from(amount));
+      case VaultTransactionType.REDEEM_COLLATERAL:
+        redeemCollateral(
+          PublicKey.fromBase58(vaultAddr),
+          UInt64.from(amount.raw)
+        );
         break;
-      case TransactionType.BURN_ZKUSD:
-        burnZkUsd(PublicKey.fromBase58(vaultAddr), UInt64.from(amount));
+      case VaultTransactionType.BURN_ZKUSD:
+        burnZkUsd(PublicKey.fromBase58(vaultAddr), UInt64.from(amount.raw));
+        break;
+      case VaultTransactionType.LIQUIDATE:
+        liquidate(PublicKey.fromBase58(vaultAddr));
         break;
     }
   };
 
   const handleCancel = () => {
     setShowAmountInput(false);
-    setAmount("");
+    setAmount({ raw: "", mina: "" });
     setActiveTransaction(null);
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawAmount = toRawMinaAmount(e.target.value);
+    setAmount({ raw: rawAmount, mina: e.target.value });
   };
 
   return (
@@ -91,8 +113,8 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
       {data && (
         <>
           <div className="mt-2 space-y-1 text-sm text-gray-600">
-            <p>Collateral: {data.collateralAmount}</p>
-            <p>Debt: {data.debtAmount}</p>
+            <p>Collateral: {formatMinaAmount(data.collateralAmount)} Mina</p>
+            <p>Debt: {formatMinaAmount(data.debtAmount)} zkUsd</p>
             <p className="break-all">
               Owner: {formatDisplayAccount(data.owner)}
             </p>
@@ -101,19 +123,21 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
           {showAmountInput && (
             <div className="mt-4 space-y-2">
               <p className="text-sm text-gray-600">
-                {activeTransaction === TransactionType.DEPOSIT_COLLATERAL &&
+                {activeTransaction ===
+                  VaultTransactionType.DEPOSIT_COLLATERAL &&
                   "Enter deposit amount"}
-                {activeTransaction === TransactionType.REDEEM_COLLATERAL &&
+                {activeTransaction === VaultTransactionType.REDEEM_COLLATERAL &&
                   "Enter withdrawal amount"}
-                {activeTransaction === TransactionType.MINT_ZKUSD &&
+                {activeTransaction === VaultTransactionType.MINT_ZKUSD &&
                   "Enter zkUSD amount to mint"}
-                {activeTransaction === TransactionType.BURN_ZKUSD &&
+                {activeTransaction === VaultTransactionType.BURN_ZKUSD &&
                   "Enter zkUSD amount to burn"}
               </p>
               <input
                 type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                name="amount"
+                value={amount.mina}
+                onChange={handleAmountChange}
                 placeholder="Enter amount"
                 className="w-full px-3 py-1 border rounded"
               />
@@ -138,7 +162,7 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
             <button
               className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() =>
-                handleTransaction(TransactionType.DEPOSIT_COLLATERAL)
+                handleTransaction(VaultTransactionType.DEPOSIT_COLLATERAL)
               }
             >
               Deposit
@@ -146,20 +170,20 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
             <button
               className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={() =>
-                handleTransaction(TransactionType.REDEEM_COLLATERAL)
+                handleTransaction(VaultTransactionType.REDEEM_COLLATERAL)
               }
             >
               Withdraw
             </button>
             <button
               className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              onClick={() => handleTransaction(TransactionType.MINT_ZKUSD)}
+              onClick={() => handleTransaction(VaultTransactionType.MINT_ZKUSD)}
             >
               Mint zkUSD
             </button>
             <button
               className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              onClick={() => handleTransaction(TransactionType.BURN_ZKUSD)}
+              onClick={() => handleTransaction(VaultTransactionType.BURN_ZKUSD)}
             >
               Repay zkUSD
             </button>
@@ -167,7 +191,7 @@ const VaultCard = ({ vaultAddr }: { vaultAddr: string }) => {
               className={`px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 col-span-2 ${
                 isProcessing ? "opacity-50 cursor-not-allowed" : ""
               }`}
-              onClick={() => handleTransaction(TransactionType.LIQUIDATE)}
+              onClick={() => handleTransaction(VaultTransactionType.LIQUIDATE)}
               disabled={isProcessing}
             >
               {isProcessing ? "Processing..." : "Liquidate"}
