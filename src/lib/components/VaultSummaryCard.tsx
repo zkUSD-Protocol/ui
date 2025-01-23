@@ -4,11 +4,18 @@ import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Button } from "./ui";
 import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils";
+import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils/formatting";
+import { useVaultState } from "../hooks/use-vault-state";
+import { useContracts } from "../context/contracts";
 
 const VaultSummaryCard = ({ vaultAddress }: { vaultAddress: string }) => {
-  const { getVaultQuery, removeVaultAddress } = useVaultManager();
-  const { data, isLoading, isError } = getVaultQuery(vaultAddress);
+  const { removeVaultAddress } = useVaultManager();
+  const { engine } = useContracts();
+  const {
+    data: vaultData,
+    isLoading,
+    isError,
+  } = useVaultState(vaultAddress, engine);
 
   const handleRemove = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,18 +50,18 @@ const VaultSummaryCard = ({ vaultAddress }: { vaultAddress: string }) => {
           <p className="text-red-500 text-center">Error loading vault</p>
         )}
 
-        {data && (
+        {vaultData && (
           <>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Collateral:</span>
               <span className="font-medium">
-                {formatMinaAmount(data.collateralAmount)} MINA
+                {formatMinaAmount(vaultData.collateralAmount)} MINA
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Debt:</span>
               <span className="font-medium">
-                {formatMinaAmount(data.debtAmount)} zkUSD
+                {formatMinaAmount(vaultData.debtAmount)} zkUSD
               </span>
             </div>
           </>
@@ -63,7 +70,10 @@ const VaultSummaryCard = ({ vaultAddress }: { vaultAddress: string }) => {
 
       <CardFooter>
         <Link href={`/vault/${vaultAddress}`} className="w-full">
-          <Button disabled={isLoading || isError || !data} className="w-full">
+          <Button
+            disabled={isLoading || isError || !vaultData}
+            className="w-full"
+          >
             Open Vault
           </Button>
         </Link>

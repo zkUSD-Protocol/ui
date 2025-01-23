@@ -25,8 +25,6 @@ export async function POST(req: NextRequest) {
       args: body.args,
     });
 
-    console.log("response from cloud worker", result);
-
     return NextResponse.json(result);
   } catch (error) {
     console.error("Cloud worker error:", error);

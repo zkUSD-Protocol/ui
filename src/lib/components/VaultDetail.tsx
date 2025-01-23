@@ -1,51 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils";
-import { VaultOnChainState } from "@/lib/context/vault-manager";
+import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils/formatting";
 import { Separator } from "./ui/separator";
 import {
   calculateHealthFactor,
   calculateLTV,
   formatHealthFactor,
-  formatLTV,
   getHealthFactorColor,
 } from "@/lib/utils/loan";
-import { useLatestProof } from "../hooks/useLatestProof";
+import { VaultState } from "@/lib/types";
 import { usePrice } from "@/lib/context/price";
 import LTVProgress from "./LTVProgress";
+import { useVault } from "@/lib/context/vault";
 
-interface VaultDetailCardProps {
-  vaultAddress: string;
-  vaultData: VaultOnChainState | undefined;
-  isLoading: boolean;
-  isError: boolean;
-}
-
-const VaultDetailCard = ({
-  vaultAddress,
-  vaultData,
-  isLoading,
-  isError,
-}: VaultDetailCardProps) => {
+const VaultDetailCard = () => {
   const [healthFactor, setHealthFactor] = useState(0);
   const { minaPrice, isLoading: isPriceLoading } = usePrice();
+  const { vault } = useVault();
 
   useEffect(() => {
     if (minaPrice) {
       setHealthFactor(
         calculateHealthFactor(
-          BigInt(vaultData?.collateralAmount || 0),
-          BigInt(vaultData?.debtAmount || 0),
+          BigInt(vault?.collateralAmount || 0),
+          BigInt(vault?.debtAmount || 0),
           minaPrice
         )
       );
     }
-  }, [minaPrice, vaultData]);
+  }, [minaPrice, vault]);
 
-  const ltv = vaultData
+  const ltv = vault
     ? calculateLTV(
-        BigInt(vaultData.collateralAmount),
-        BigInt(vaultData.debtAmount),
+        BigInt(vault.collateralAmount),
+        BigInt(vault.debtAmount),
         minaPrice
       )
     : 0;
@@ -57,7 +45,7 @@ const VaultDetailCard = ({
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold">Vault Overview</h2>
             <p className="text-sm text-muted-foreground font-mono">
-              {formatDisplayAccount(vaultAddress)}
+              {formatDisplayAccount(vault?.vaultAddress || "")}
             </p>
           </div>
           <div className="space-y-4">
@@ -66,7 +54,7 @@ const VaultDetailCard = ({
                 Owner
               </h3>
               <p className="font-mono text-sm">
-                {formatDisplayAccount(vaultData?.owner || "")}
+                {formatDisplayAccount(vault?.owner || "")}
               </p>
             </div>
           </div>
@@ -74,13 +62,15 @@ const VaultDetailCard = ({
       </CardHeader>
 
       <CardContent className="grid gap-6">
-        {isLoading && (
+        {/* {vaultQuery?.isLoading && (
           <p className="text-muted-foreground">Loading vault details...</p>
         )}
 
-        {isError && <p className="text-red-500">Error loading vault details</p>}
+        {vaultQuery?.isError && (
+          <p className="text-red-500">Error loading vault details</p>
+        )} */}
 
-        {vaultData && (
+        {vault && (
           <>
             <div className="grid grid-cols-2 gap-4 mt-5">
               <div className="space-y-2 flex flex-col items-center">
@@ -88,7 +78,7 @@ const VaultDetailCard = ({
                   Collateral
                 </h3>
                 <p className="text-2xl font-bold">
-                  {formatMinaAmount(vaultData.collateralAmount)} MINA
+                  {formatMinaAmount(vault!.collateralAmount)} MINA
                 </p>
               </div>
               <div className="space-y-2 flex flex-col items-center">
@@ -96,7 +86,7 @@ const VaultDetailCard = ({
                   Debt
                 </h3>
                 <p className="text-2xl font-bold">
-                  {formatMinaAmount(vaultData.debtAmount)} zkUSD
+                  {formatMinaAmount(vault!.debtAmount)} zkUSD
                 </p>
               </div>
             </div>
@@ -113,7 +103,7 @@ const VaultDetailCard = ({
                     healthFactor
                   )}`}
                 >
-                  {healthFactor}
+                  {formatHealthFactor(healthFactor)}
                 </p>
               </div>
             </div>

@@ -55,7 +55,7 @@ export function calculateLTV(
 ): number {
   // If there's no collateral, return 100% LTV
   if (collateralAmount === 0n) {
-    return 100;
+    return 0;
   }
 
   // Calculate USD value of collateral

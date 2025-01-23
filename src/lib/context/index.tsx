@@ -1,10 +1,9 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { CloudWorkerProvider } from "./cloud-worker";
 import { VaultProvider } from "./vault";
 import { AccountProvider } from "./account";
-import { TransactionProvider } from "./transaction";
+
 import { VaultManagerProvider } from "./vault-manager";
 import { ContractsProvider } from "./contracts";
 import { PriceProvider } from "./price";
@@ -20,17 +19,13 @@ export function Providers({ children, initialState }: ProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <ContractsProvider>
-        <CloudWorkerProvider>
-          <AccountProvider>
-            <TransactionProvider>
-              <VaultProvider>
-                <VaultManagerProvider>
-                  <PriceProvider>{children}</PriceProvider>
-                </VaultManagerProvider>
-              </VaultProvider>
-            </TransactionProvider>
-          </AccountProvider>
-        </CloudWorkerProvider>
+        <AccountProvider>
+          <VaultManagerProvider>
+            <VaultProvider>
+              <PriceProvider>{children}</PriceProvider>
+            </VaultProvider>
+          </VaultManagerProvider>
+        </AccountProvider>
       </ContractsProvider>
     </QueryClientProvider>
   );

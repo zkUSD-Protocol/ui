@@ -1,13 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 import { Mina, PublicKey, UInt32 } from "o1js";
 import {
   ZkUsdEngineContract,
   vaultVk,
   validPriceBlockCount,
   oracleAggregationVk,
+  FungibleTokenContract,
 } from "zkusd";
+import { blockchain, initBlockchain } from "zkcloudworker";
 
 /**
  * Define the shape of what's in your contracts context.
@@ -15,6 +17,7 @@ import {
  */
 interface ContractsContextValue {
   engine: InstanceType<ReturnType<typeof ZkUsdEngineContract>>;
+  token: InstanceType<ReturnType<typeof FungibleTokenContract>>;
 }
 
 /**
@@ -30,8 +33,16 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
   // Example: If you need to set the active instance for Mina:
   // e.g. Mina.setActiveInstance(Mina.LocalBlockchain()); or some testnet config.
 
+  const initializeNetwork = async () => {
+    await initBlockchain(process.env.NEXT_PUBLIC_CHAIN! as blockchain);
+  };
+
+  useEffect(() => {
+    initializeNetwork();
+  }, []);
+
   // Build your engine instance (using environment variables)
-  const engine = useMemo(() => {
+  const contracts = useMemo(() => {
     const tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS;
     const engineAddress = process.env.NEXT_PUBLIC_ENGINE_ADDRESS;
     if (!tokenAddress || !engineAddress) {
@@ -44,17 +55,18 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
     const ZkUsdEngine = ZkUsdEngineContract({
       zkUsdTokenAddress: PublicKey.fromBase58(tokenAddress),
       minaPriceInputZkProgramVkHash: oracleAggregationVk.hash,
-      validPriceBlockCount: UInt32.from(
-        validPriceBlockCount[process.env.NEXT_PUBLIC_NETWORK || "local"]
-      ),
       vaultVerificationKey: vaultVk,
     });
 
-    // Instantiate the engine with address
-    return new ZkUsdEngine(PublicKey.fromBase58(engineAddress));
+    const FungibleToken = ZkUsdEngine.FungibleToken;
+
+    const engine = new ZkUsdEngine(PublicKey.fromBase58(engineAddress));
+    const token = new FungibleToken(PublicKey.fromBase58(tokenAddress));
+
+    return { engine, token };
   }, []);
 
-  const value = useMemo<ContractsContextValue>(() => ({ engine }), [engine]);
+  const value = useMemo<ContractsContextValue>(() => contracts, [contracts]);
 
   return (
     <ContractsContext.Provider value={value}>

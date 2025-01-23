@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useLatestProof } from "../hooks/useLatestProof";
+import { useLatestProof } from "../hooks/use-latest-proof";
 
 interface PriceContextProps {
   minaPrice: bigint;

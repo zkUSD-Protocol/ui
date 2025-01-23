@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import { Button } from "@/lib/components/ui";
 import { useAccount } from "@/lib/context/account";
-
-import { formatDisplayAccount } from "@/lib/utils";
+import { formatDisplayAccount } from "@/lib/utils/formatting";
 
 const ConnectWallet = () => {
   const { connect, account, isConnected, disconnect } = useAccount();

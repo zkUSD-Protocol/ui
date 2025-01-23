@@ -7,23 +7,16 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { PublicKey, PrivateKey } from "o1js";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useVault } from "./vault"; // from your existing vault.tsx
-import { fetchVaultState } from "@/lib/helpers/fetchVaultState";
+import { PublicKey, PrivateKey, Mina, AccountUpdate } from "o1js";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { useContracts } from "./contracts";
+import { fetchMinaAccount } from "zkcloudworker";
+import { VaultTransactionType, ZkUsdVault } from "zkusd";
+import { VaultState } from "../types";
+import { useAccount } from "./account";
+import { prepareTransaction, signAndProve } from "../utils/transaction";
 // or wherever you keep your engine instance
 // (importing a single shared engine or constructing it once in the app)
-
-/**
- * Shape of the vault state in the UI.
- * Extend this as you see fit.
- */
-export interface VaultOnChainState {
-  collateralAmount: string;
-  debtAmount: string;
-  owner: string;
-}
 
 interface VaultManagerContextProps {
   vaultAddresses: string[];
@@ -31,9 +24,6 @@ interface VaultManagerContextProps {
   createNewVault: (privateKey: PrivateKey) => Promise<void>;
   removeVaultAddress: (vaultAddress: string) => void;
   importVaultAddress: (vaultAddress: string) => void;
-  getVaultQuery: (
-    vaultAddress: string
-  ) => ReturnType<typeof useQuery<VaultOnChainState>>;
 }
 
 /**
@@ -51,10 +41,9 @@ export function VaultManagerProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { createVault } = useVault();
-  const { engine } = useContracts();
+  const { engine, token } = useContracts();
   const [vaultAddresses, setVaultAddresses] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+  const { account } = useAccount();
 
   // On first load, read any vault addresses from localStorage.
   useEffect(() => {
@@ -94,14 +83,51 @@ export function VaultManagerProvider({
         const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
         // Create the vault using the provided private key
-        const response = await createVault(vaultPrivateKey);
+        const memo = VaultTransactionType.CREATE_VAULT;
+        let newAccounts = 0;
+
+        // Check to see if the user already has a zkusd token account
+        await fetchMinaAccount({
+          publicKey: account!,
+          tokenId: token.deriveTokenId(),
+        });
+
+        if (!Mina.hasAccount(account!)) {
+          newAccounts = 2;
+        } else {
+          newAccounts = 1;
+        }
+
+        // Prepare transaction
+        const tx = await prepareTransaction(
+          async () => {
+            // Fund new accounts for deploying the vault
+            AccountUpdate.fundNewAccount(account!, newAccounts);
+            await engine.createVault(PublicKey.fromBase58(vaultAddress));
+          },
+          memo,
+          account!
+        );
+
+        // Sign the transaction
+        tx.sign([vaultPrivateKey]);
+
+        // Broadcast
+        const response = await signAndProve({
+          task: VaultTransactionType.CREATE_VAULT,
+          tx,
+          memo,
+          args: {
+            vaultAddress,
+            newAccounts,
+          },
+        });
 
         if (response.success) {
           // Add to tracked addresses only after successful creation
           setVaultAddresses((prev) =>
             Array.from(new Set([...prev, vaultAddress]))
           );
-          console.log("Vault created successfully:", vaultAddress);
         } else {
           throw new Error(response.error || "Failed to create vault");
         }
@@ -110,7 +136,7 @@ export function VaultManagerProvider({
         throw error; // Re-throw to handle in the component
       }
     },
-    [createVault]
+    [engine, token, account]
   );
 
   /**
@@ -135,30 +161,6 @@ export function VaultManagerProvider({
   }, []);
 
   /**
-   * For each vault address, we'll define a function returning a custom
-   * React Query hook that fetches the vault's on-chain state.
-   *
-   * This approach returns useQuery directly. Then your components can do:
-   *    const { data, isLoading } = getVaultQuery(vaultAddress);
-   */
-  const getVaultQuery = (vaultAddress: string) => {
-    return useQuery<VaultOnChainState>({
-      queryKey: ["vaultState", vaultAddress],
-      queryFn: async () => {
-        // Convert the base58 address back to a PublicKey
-        const { PublicKey } = await import("o1js");
-        const pk = PublicKey.fromBase58(vaultAddress);
-        // Now call our direct on-chain fetch
-        return await fetchVaultState(pk, engine);
-      },
-      // If you want, you can set staleTime or cacheTime or enable/disable
-      // based on whether the user is connected, etc.
-      staleTime: 3000,
-      enabled: !!vaultAddress,
-    });
-  };
-
-  /**
    * Invalidate the vault's query after deposit, mint, or repay, etc.
    * e.g. queryClient.invalidateQueries(["vaultState", vaultAddress]);
    *
@@ -174,7 +176,6 @@ export function VaultManagerProvider({
         createNewVault,
         removeVaultAddress,
         importVaultAddress,
-        getVaultQuery,
       }}
     >
       {children}

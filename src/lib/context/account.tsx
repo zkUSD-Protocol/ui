@@ -2,11 +2,9 @@
 
 import { PublicKey } from "o1js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { formatDisplayAccount } from "@/lib/utils/index";
 
 interface AccountContextProps {
   account: PublicKey | null;
-  displayAccount: string | null;
   isConnected: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
@@ -24,7 +22,6 @@ export const AccountProvider = ({
   const connect = async () => {
     try {
       const accounts = await window.mina?.requestAccounts();
-
       if (!accounts || "code" in accounts) {
         throw new Error("No accounts found");
       }
@@ -49,9 +46,6 @@ export const AccountProvider = ({
     <AccountContext.Provider
       value={{
         account,
-        displayAccount: account
-          ? formatDisplayAccount(account.toBase58())
-          : null,
         isConnected: !!account,
         connect,
         disconnect,

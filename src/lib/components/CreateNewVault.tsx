@@ -19,7 +19,7 @@ const CreateNewVault = () => {
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [vaultData, setVaultData] = useState<{
+  const [vaultKeyPair, setVaultKeyPair] = useState<{
     privateKey: PrivateKey;
     address: string;
   } | null>(null);
@@ -29,22 +29,22 @@ const CreateNewVault = () => {
     if (!newOpen) {
       // Reset states when dialog closes
       setCopied(false);
-      setVaultData(null);
+      setVaultKeyPair(null);
       setIsCreating(false);
     }
   };
 
   const handleDialogTrigger = () => {
     // Generate new vault data when dialog opens
-    const newVaultData = generateVaultAddress();
-    setVaultData(newVaultData);
+    const newVaultKeyPair = generateVaultAddress();
+    setVaultKeyPair(newVaultKeyPair);
   };
 
   const copyToClipboard = async () => {
-    if (!vaultData) return;
+    if (!vaultKeyPair) return;
 
     try {
-      await navigator.clipboard.writeText(vaultData.address);
+      await navigator.clipboard.writeText(vaultKeyPair.address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
     } catch (err) {
@@ -53,11 +53,11 @@ const CreateNewVault = () => {
   };
 
   const handleCreate = async () => {
-    if (!vaultData) return;
+    if (!vaultKeyPair) return;
 
     try {
       setIsCreating(true);
-      await createNewVault(vaultData.privateKey);
+      await createNewVault(vaultKeyPair.privateKey);
       setOpen(false);
     } catch (error) {
       console.error("Error creating vault:", error);
@@ -85,7 +85,7 @@ const CreateNewVault = () => {
         <div className="flex items-center space-x-2">
           <div className="grid flex-1 gap-2">
             <div className="bg-muted p-2 rounded-md break-all font-mono text-sm">
-              {vaultData?.address}
+              {vaultKeyPair?.address}
             </div>
           </div>
           <Button
@@ -111,7 +111,7 @@ const CreateNewVault = () => {
           >
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={isCreating || !vaultData}>
+          <Button onClick={handleCreate} disabled={isCreating || !vaultKeyPair}>
             {isCreating ? "Creating..." : "Create Vault"}
           </Button>
         </DialogFooter>

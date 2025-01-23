@@ -1,18 +1,26 @@
 "use client";
 
-import {
-  VaultDetailCard,
-  VaultCard,
-  VaultInteractions,
-} from "@/lib/components";
+import { VaultDetailCard, VaultInteractions } from "@/lib/components";
 import { useVaultManager } from "@/lib/context/vault-manager";
 import { Button } from "@/lib/components/ui";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useVault } from "@/lib/context/vault";
+import { useEffect } from "react";
+import { PublicKey } from "o1js";
+import { VaultState } from "@/lib/types";
 
 export default function VaultPage({ params }: { params: { address: string } }) {
-  const { getVaultQuery } = useVaultManager();
-  const { data, isLoading, isError } = getVaultQuery(params.address);
+  const { setVault } = useVault();
+
+  useEffect(() => {
+    setVault({
+      vaultAddress: params.address,
+      collateralAmount: BigInt(0),
+      debtAmount: BigInt(0),
+      owner: "",
+    });
+  }, [params.address]);
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
@@ -25,14 +33,9 @@ export default function VaultPage({ params }: { params: { address: string } }) {
         <h1 className="text-2xl font-bold">Vault Details</h1>
       </div>
 
-      <VaultDetailCard
-        vaultAddress={params.address}
-        vaultData={data}
-        isLoading={isLoading}
-        isError={isError}
-      />
+      <VaultDetailCard />
 
-      <VaultInteractions vaultAddress={params.address} />
+      <VaultInteractions />
     </div>
   );
 }

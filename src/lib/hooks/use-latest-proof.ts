@@ -21,8 +21,5 @@ export function useLatestProof() {
 
       return proof;
     },
-    // Refresh every 30 seconds
-    refetchInterval: 20000,
-    refetchOnMount: true,
   });
 }

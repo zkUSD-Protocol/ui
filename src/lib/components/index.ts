@@ -1,4 +1,3 @@
-export { default as VaultCard } from "./VaultCard";
 export { default as Header } from "./Header";
 export { default as ConnectWallet } from "./ConnectWallet";
 export { default as Vaults } from "./Vaults";

@@ -30,10 +30,6 @@ const LTVProgress = ({
     return "bg-green-500";
   };
 
-  console.log("Current LTV", currentLTV);
-  console.log("Max LTV", maxLTV);
-  console.log("Liquidation Threshold", liquidationThreshold);
-
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex justify-between items-baseline">
