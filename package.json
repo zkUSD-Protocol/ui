@@ -30,12 +30,22 @@
     "zkusd": "file:../core"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.7",
+    "@babel/preset-env": "^7.26.7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "babel-loader": "^9.2.1",
+    "babel-plugin-transform-rename-import": "^2.3.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "path-browserify": "^1.0.1",
     "postcss": "^8",
+    "stream-browserify": "^3.0.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "util": "^0.12.5",
+    "webpack": "^5.97.1"
   },
   "type": "module"
 }
