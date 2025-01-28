@@ -4,8 +4,6 @@ import React, { createContext, useContext, useEffect, useMemo } from "react";
 import { Mina, PublicKey, UInt32 } from "o1js";
 import {
   ZkUsdEngineContract,
-  vaultVk,
-  validPriceBlockCount,
   oracleAggregationVk,
   FungibleTokenContract,
 } from "zkusd";
@@ -55,7 +53,6 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
     const ZkUsdEngine = ZkUsdEngineContract({
       zkUsdTokenAddress: PublicKey.fromBase58(tokenAddress),
       minaPriceInputZkProgramVkHash: oracleAggregationVk.hash,
-      vaultVerificationKey: vaultVk,
     });
 
     const FungibleToken = ZkUsdEngine.FungibleToken;

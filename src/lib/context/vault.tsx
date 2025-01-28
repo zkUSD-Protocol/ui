@@ -18,11 +18,8 @@ import {
   MinaPriceInput,
   oracleAggregationVk,
   VaultTransactionType,
-  ZkUsdVault,
 } from "zkusd";
 import { VaultState } from "../types";
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { useVaultManager } from "./vault-manager";
 import { useVaultState } from "../hooks/use-vault-state";
 
 /**

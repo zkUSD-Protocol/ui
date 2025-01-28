@@ -11,7 +11,7 @@ import { PublicKey, PrivateKey, Mina, AccountUpdate } from "o1js";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { useContracts } from "./contracts";
 import { fetchMinaAccount } from "zkcloudworker";
-import { VaultTransactionType, ZkUsdVault } from "zkusd";
+import { VaultTransactionType } from "zkusd";
 import { VaultState } from "../types";
 import { useAccount } from "./account";
 import { prepareTransaction, signAndProve } from "../utils/transaction";

@@ -1,6 +1,6 @@
-import { PublicKey } from "o1js";
+import { AccountUpdate, PublicKey } from "o1js";
 import { useQuery } from "@tanstack/react-query";
-import { ZkUsdEngineContract, ZkUsdVault } from "zkusd";
+import { ZkUsdEngineContract, Vault } from "zkusd";
 import { fetchMinaAccount } from "zkcloudworker";
 import { VaultState } from "../types/vault";
 
@@ -17,19 +17,20 @@ export function useVaultState(
         tokenId: engine.deriveTokenId(),
       });
 
-      const vault = new ZkUsdVault(
+      const vaultUpdate = AccountUpdate.create(
         PublicKey.fromBase58(vaultAddress),
         engine.deriveTokenId()
       );
+
+      const vault = Vault.get(vaultUpdate);
 
       if (!vault) {
         throw new Error("Vault not found");
       }
 
-      const collateralAmount =
-        (await vault.collateralAmount.fetch())!.toBigInt();
-      const debtAmount = (await vault.debtAmount.fetch())!.toBigInt();
-      const ownerPublicKey = await vault.owner.fetch();
+      const collateralAmount = vault.state.collateralAmount.toBigInt();
+      const debtAmount = vault.state.debtAmount.toBigInt();
+      const ownerPublicKey = vault.state.owner;
       const owner = ownerPublicKey?.toBase58() ?? "Not Found";
 
       return {
