@@ -1,6 +1,6 @@
 import React from "react";
 import { useVault } from "../context/vault";
-import { Gauge } from "./ui";
+import { Gauge } from "@/lib/components/ui";
 import { getGaugeColorForHealthFactor } from "../utils/color";
 import { getHealthFactorRisk } from "../utils/loan";
 

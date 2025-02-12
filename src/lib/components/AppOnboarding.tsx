@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useAccount } from "../context/account";
 import { Button, Card } from "./ui";
 import { useVaultManager } from "../context/vault-manager";
-import CreateVault from "./CreateVault";
-import ImportVault from "./ImportVault";
+import { CreateVault, ImportVault } from "@/lib/components";
 
 const AppOnboarding = () => {
   const { connect, account, isConnected } = useAccount();

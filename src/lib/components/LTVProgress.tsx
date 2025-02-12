@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Progress } from "./ui/progress";
 import { useVault } from "../context/vault";
 import { Triangle } from "lucide-react";

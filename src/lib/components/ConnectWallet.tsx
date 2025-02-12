@@ -5,8 +5,7 @@ import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils/formatting";
 import Image from "next/image";
 
 const ConnectWallet = () => {
-  const { connect, account, isConnected, disconnect, minaBalance } =
-    useAccount();
+  const { account, isConnected, disconnect, minaBalance } = useAccount();
 
   return (
     <>
