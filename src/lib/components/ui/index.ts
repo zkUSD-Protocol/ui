@@ -22,3 +22,4 @@ export {
 } from "./dialog";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Progress } from "./progress";
+export { Gauge } from "./gauge";

@@ -7,6 +7,7 @@ import { AccountProvider } from "./account";
 import { VaultManagerProvider } from "./vault-manager";
 import { ContractsProvider } from "./contracts";
 import { PriceProvider } from "./price";
+import { TransactionStatusProvider } from "./transaction-status";
 
 interface ProviderProps {
   children: React.ReactNode;
@@ -20,11 +21,13 @@ export function Providers({ children, initialState }: ProviderProps) {
     <QueryClientProvider client={queryClient}>
       <ContractsProvider>
         <AccountProvider>
-          <VaultManagerProvider>
-            <VaultProvider>
-              <PriceProvider>{children}</PriceProvider>
-            </VaultProvider>
-          </VaultManagerProvider>
+          <TransactionStatusProvider>
+            <PriceProvider>
+              <VaultManagerProvider>
+                <VaultProvider>{children}</VaultProvider>
+              </VaultManagerProvider>
+            </PriceProvider>
+          </TransactionStatusProvider>
         </AccountProvider>
       </ContractsProvider>
     </QueryClientProvider>

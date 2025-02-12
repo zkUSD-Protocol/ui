@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { Button } from "./ui";
+import React, { useEffect, useState } from "react";
+import { Button, Card } from "./ui";
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,13 @@ import { useVaultManager } from "@/lib/context/vault-manager";
 import { PrivateKey } from "o1js";
 import { Copy, Check } from "lucide-react";
 
-const CreateNewVault = () => {
+type CreateNewVaultProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+const CreateVault = ({ open, onOpenChange }: CreateNewVaultProps) => {
   const { generateVaultAddress, createNewVault } = useVaultManager();
-  const [open, setOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [vaultKeyPair, setVaultKeyPair] = useState<{
     privateKey: PrivateKey;
@@ -25,20 +28,18 @@ const CreateNewVault = () => {
   } | null>(null);
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    onOpenChange(newOpen);
     if (!newOpen) {
       // Reset states when dialog closes
       setCopied(false);
       setVaultKeyPair(null);
-      setIsCreating(false);
     }
   };
 
-  const handleDialogTrigger = () => {
-    // Generate new vault data when dialog opens
+  useEffect(() => {
     const newVaultKeyPair = generateVaultAddress();
     setVaultKeyPair(newVaultKeyPair);
-  };
+  }, [open]);
 
   const copyToClipboard = async () => {
     if (!vaultKeyPair) return;
@@ -56,45 +57,42 @@ const CreateNewVault = () => {
     if (!vaultKeyPair) return;
 
     try {
-      setIsCreating(true);
+      onOpenChange(false);
       await createNewVault(vaultKeyPair.privateKey);
-      setOpen(false);
     } catch (error) {
       console.error("Error creating vault:", error);
       // You might want to show an error message to the user here
-    } finally {
-      setIsCreating(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild onClick={handleDialogTrigger}>
-        <Button>Create Vault</Button>
-      </DialogTrigger>
-
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="">
         <DialogHeader>
-          <DialogTitle>Create New Vault</DialogTitle>
+          <DialogTitle className="">Create new vault</DialogTitle>
           <DialogDescription>
             This will be your vault's address. Please save it somewhere safe as
             you'll need it to access your vault later.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-6 ">
           <div className="grid flex-1 gap-2">
-            <div className="bg-muted p-2 rounded-md break-all font-mono text-sm">
+            <Card
+              className="py-2 px-4 break-all font-mono leading-[18px] text-xs tracking-[0.06em]"
+              variant="foreground"
+            >
               {vaultKeyPair?.address}
-            </div>
+            </Card>
           </div>
+
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="h-8 w-8"
+            size="sm"
             onClick={copyToClipboard}
           >
+            <span className="">Copy</span>
             {copied ? (
               <Check className="h-4 w-4" />
             ) : (
@@ -103,16 +101,9 @@ const CreateNewVault = () => {
           </Button>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={isCreating || !vaultKeyPair}>
-            {isCreating ? "Creating..." : "Create Vault"}
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 mr-auto">
+          <Button onClick={handleCreate} disabled={!vaultKeyPair}>
+            Create Vault
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -120,4 +111,4 @@ const CreateNewVault = () => {
   );
 };
 
-export default CreateNewVault;
+export default CreateVault;

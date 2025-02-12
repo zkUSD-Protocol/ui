@@ -17,13 +17,32 @@ export async function POST(req: NextRequest) {
   try {
     const body: CloudWorkerRequest = await req.json();
 
-    const result = await api.execute({
-      developer: "zkusd", // replace with your developer name
-      repo: "zkusd", // replace with your repo name
-      transactions: body.transactions || [],
-      task: body.task,
-      args: body.args,
-    });
+    // const result = await api.execute({
+    //   developer: "zkusd", // replace with your developer name
+    //   repo: "zkusd", // replace with your repo name
+    //   transactions: body.transactions || [],
+    //   task: body.task,
+    //   args: body.args,
+    // });
+
+    const response = await fetch(
+      `${process.env.WORKER_SERVICE_URL}/api/work/prove-and-send`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Worker service responded with status: ${response.status}`
+      );
+    }
+
+    const result = await response.json();
 
     return NextResponse.json(result);
   } catch (error) {

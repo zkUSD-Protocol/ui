@@ -3,4 +3,6 @@ export interface VaultState {
   collateralAmount: bigint;
   debtAmount: bigint;
   owner: string;
+  currentLTV: number;
+  currentHealthFactor: number;
 }

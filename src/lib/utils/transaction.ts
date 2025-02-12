@@ -2,6 +2,7 @@ import { Mina, PublicKey } from "o1js";
 import { fee } from "zkcloudworker";
 import { CloudWorkerRequest, CloudWorkerResponse } from "../types/cloud-worker";
 import { VaultTransactionArgs, VaultTransactionType } from "zkusd";
+import { TxLifecycleStatus } from "zkusd";
 
 const prepareTransaction = async (
   callback: () => Promise<void>,
@@ -69,14 +70,23 @@ const signAndProve = async ({
   tx,
   memo,
   args,
+  setTxStatus,
+  setTxError,
 }: {
   task: VaultTransactionType;
   tx: Mina.Transaction<false, false>;
   memo: VaultTransactionType;
   args: VaultTransactionArgs[VaultTransactionType];
+  setTxStatus: (txStatus: TxLifecycleStatus) => void;
+  setTxError: (txError: string | undefined) => void;
 }) => {
   try {
+    console.log(tx.toPretty());
+
     const serializedTx = serializeTransaction(tx);
+
+    setTxStatus(TxLifecycleStatus.SIGNING);
+
     const signResult = await window.mina?.sendTransaction({
       onlySign: true,
       transaction: tx.toJSON(),
@@ -99,6 +109,8 @@ const signAndProve = async ({
       signedData: signResult.signedData,
     });
 
+    setTxStatus(TxLifecycleStatus.PREPARING);
+
     const response = await fetch("/api/cloud-worker", {
       method: "POST",
       headers: {
@@ -116,13 +128,21 @@ const signAndProve = async ({
     }
 
     const result = await response.json();
-    if (!result.success) {
+
+    if (result.status !== "success") {
       throw new Error(result.error);
     }
 
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in signAndProve:", error);
+    if ((error.code = 1002)) {
+      setTxError(error.message);
+    } else {
+      setTxError("Something went wrong, please try again.");
+    }
+    setTxStatus(TxLifecycleStatus.FAILED);
+
     throw error;
   }
 };

@@ -1,108 +1,101 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Progress } from "./ui/progress";
-import { cn } from "@/lib/utils/ui";
+import { useVault } from "../context/vault";
+import { Triangle } from "lucide-react";
+import { Separator } from "./ui";
+import { getGradientColorForLTV } from "@/lib/utils/color";
 
-interface LTVProgressProps {
-  currentLTV: number;
-  maxLTV: number;
-  liquidationThreshold: number;
-  className?: string;
-}
+const LTVProgress = () => {
+  const { vault, projectedState } = useVault();
 
-const LTVProgress = ({
-  currentLTV,
-  maxLTV,
-  liquidationThreshold,
-  className,
-}: LTVProgressProps) => {
-  // Helper function to determine the risk level
-  const getRiskLevel = (ltv: number) => {
-    if (ltv < maxLTV * 0.5) return "Conservative";
-    if (ltv < maxLTV * 0.75) return "Moderate";
-    if (ltv < liquidationThreshold) return "Aggressive";
-    return "Liquidation";
-  };
+  if (!vault) return null;
 
-  // Helper function to get the progress bar color based on LTV
-  const getProgressColor = (ltv: number) => {
-    if (ltv >= liquidationThreshold) return "bg-red-500";
-    if (ltv >= maxLTV * 0.75) return "bg-yellow-500";
-    return "bg-green-500";
-  };
+  let ltv: number;
+
+  if (!!projectedState) {
+    ltv = Math.min(projectedState.ltv, 100);
+  } else {
+    ltv = vault.currentLTV;
+  }
+
+  const projectedColor = getGradientColorForLTV(ltv);
 
   return (
-    <div className={cn("space-y-3", className)}>
-      <div className="flex justify-between items-baseline">
-        <div>
-          <h3 className="text-lg font-medium">Loan to Value (LTV)</h3>
-          <p className="text-sm text-muted-foreground">
-            Ratio of the collateral value to the borrowed value
-          </p>
-        </div>
-        <div className="text-right flex flex-col">
-          <span className="text-2xl font-bold">{currentLTV.toFixed(2)}%</span>
-          <span className="text-sm text-muted-foreground ml-1">
-            max. {maxLTV.toFixed(2)}%
-          </span>
-        </div>
-      </div>
-
-      <div className="relative">
-        <Progress value={currentLTV} max={100} />
-
-        {/* Liquidation threshold marker */}
+    <>
+      <div className="flex items-end relative h-20 ">
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-red-500"
+          className="absolute bottom-0 w-full h-16 "
           style={{
-            left: `${liquidationThreshold}%`,
+            background:
+              "linear-gradient(90deg, hsl(var(--healthy)) 0%, hsl(var(--healthy)) 40%, hsl(var(--warning)) 50%, hsl(var(--danger)) 66%, hsl(var(--danger)) 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to top, rgba(0, 0, 0, 0.2) 10%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0) 100%)",
+            maskImage:
+              "linear-gradient(to top, rgba(0, 0, 0, 0.2) 10%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0) 100%)",
+            clipPath: `inset(0 ${100 - ltv}% 0 0)`,
+          }}
+        />
+        <div className="absolute bottom-0 left-[66%] w-[1px] bg-danger h-14 flex items-center justify-center">
+          <div className="absolute top-0 left-2 text-nowrap text-danger text-xs leaing-[18px] tracking-[0.06em]">
+            max 66.6%
+          </div>
+        </div>
+        <div
+          className={`absolute bottom-[1px] transform -translate-x-1/2 flex flex-col items-center`}
+          style={{
+            left: `${vault.currentLTV}%`,
             transform: "translateX(-50%)",
           }}
         >
-          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-red-500">
-            {liquidationThreshold.toFixed(2)}%
+          {vault.collateralAmount > 0n && vault.debtAmount > 0n && (
+            <>
+              {!projectedState && (
+                <p className="text-xs leading-[18px] tracking-[0.06em]">
+                  Current
+                </p>
+              )}
+              <Triangle
+                className="w-2 h-2 text-white rotate-180"
+                strokeWidth={0}
+                fill="currentColor"
+              />
+            </>
+          )}
+        </div>
+        {!!projectedState && projectedState.ltv > 0 && (
+          <div
+            className={`absolute bottom-[1px] transform -translate-x-1/2 flex flex-col items-center`}
+            style={{
+              left: `${ltv}%`,
+              transform: "translateX(-50%)",
+              color: projectedColor,
+            }}
+          >
+            <p className="text-xs leading-[18px] tracking-[0.06em]">
+              Projected
+            </p>
+            <Triangle
+              className="w-2 h-2 text-white rotate-180"
+              strokeWidth={0}
+              fill={projectedColor}
+            />
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="grid grid-cols-4 text-sm">
-        <div
-          className={cn(
-            "text-center",
-            currentLTV < maxLTV * 0.5 && "font-semibold"
-          )}
-        >
-          Conservative
-        </div>
-        <div
-          className={cn(
-            "text-center",
-            currentLTV >= maxLTV * 0.5 &&
-              currentLTV < maxLTV * 0.75 &&
-              "font-semibold"
-          )}
-        >
-          Moderate
-        </div>
-        <div
-          className={cn(
-            "text-center",
-            currentLTV >= maxLTV * 0.75 &&
-              currentLTV < liquidationThreshold &&
-              "font-semibold"
-          )}
-        >
-          Aggressive
-        </div>
-        <div
-          className={cn(
-            "text-center",
-            currentLTV >= liquidationThreshold && "font-semibold text-red-500"
-          )}
-        >
-          Liquidation
-        </div>
+        <Progress value={ltv} variant="gradient" className="w-full h-[1px]" />
       </div>
-    </div>
+      <div className="flex text-xs leading-[18px] tracking-[0.06em] font-light text-muted-foreground">
+        <div className="w-2/3 flex gap-2 text-center">
+          <div className="w-1/3">Conservative</div>
+          <Separator orientation="vertical" />
+          <div className="w-1/3">Balanced</div>
+          <Separator orientation="vertical" />
+          <div className="w-1/3">Aggressive</div>
+          <Separator orientation="vertical" />
+        </div>
+        <div className="w-1/3 text-center">Liquidation</div>
+      </div>
+    </>
   );
 };
 

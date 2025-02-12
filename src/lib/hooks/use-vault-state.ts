@@ -12,25 +12,20 @@ export function useVaultState(
     queryKey: ["vaultState", vaultAddress],
     queryFn: async () => {
       //Fetch the vault again
-      await fetchMinaAccount({
+      const vaultAccount = await fetchMinaAccount({
         publicKey: PublicKey.fromBase58(vaultAddress),
         tokenId: engine.deriveTokenId(),
       });
 
-      const vaultUpdate = AccountUpdate.create(
-        PublicKey.fromBase58(vaultAddress),
-        engine.deriveTokenId()
-      );
-
-      const vault = Vault.get(vaultUpdate);
-
-      if (!vault) {
+      if (!vaultAccount.account) {
         throw new Error("Vault not found");
       }
 
-      const collateralAmount = vault.state.collateralAmount.toBigInt();
-      const debtAmount = vault.state.debtAmount.toBigInt();
-      const ownerPublicKey = vault.state.owner;
+      const vaultState = Vault.fromAccount(vaultAccount.account);
+
+      const collateralAmount = vaultState.collateralAmount.toBigInt();
+      const debtAmount = vaultState.debtAmount.toBigInt();
+      const ownerPublicKey = vaultState.owner;
       const owner = ownerPublicKey?.toBase58() ?? "Not Found";
 
       return {

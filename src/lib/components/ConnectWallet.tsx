@@ -1,23 +1,37 @@
 import React, { useEffect } from "react";
-import { Button } from "@/lib/components/ui";
+import { Button, Separator } from "@/lib/components/ui";
 import { useAccount } from "@/lib/context/account";
-import { formatDisplayAccount } from "@/lib/utils/formatting";
+import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils/formatting";
+import Image from "next/image";
 
 const ConnectWallet = () => {
-  const { connect, account, isConnected, disconnect } = useAccount();
+  const { connect, account, isConnected, disconnect, minaBalance } =
+    useAccount();
 
   return (
     <>
       {isConnected ? (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-md border px-2 py-1">
-            {formatDisplayAccount(account!.toBase58())}
+        <div className="flex items-center gap-4">
+          <div className="flex gap-4 bg-card border border-card-border rounded-lg p-2 font-mono text-xs tracking-[0.02em] text-white">
+            <div className="">{formatDisplayAccount(account!.toBase58())}</div>
+            <div className="flex-grow -my-2">
+              <Separator orientation="vertical" />
+            </div>
+            <div className="flex gap-1">
+              <Image src="/assets/mina.svg" alt="Mina" width={12} height={12} />
+              <div className="mt-[3px] leading-none">
+                {formatMinaAmount(minaBalance ?? 0n)}
+              </div>
+            </div>
           </div>
 
-          <Button onClick={disconnect}>Disconnect</Button>
+          <Button variant="outline" onClick={disconnect}>
+            Disconnect
+          </Button>
         </div>
       ) : (
-        <Button onClick={connect}>Connect Wallet</Button>
+        // <Button onClick={connect}>Connect Wallet</Button>
+        <></>
       )}
     </>
   );

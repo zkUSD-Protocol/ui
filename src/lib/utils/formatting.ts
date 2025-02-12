@@ -1,5 +1,5 @@
-export const formatDisplayAccount = (account: string) =>
-  `${account.slice(0, 6)}...${account.slice(-4)}`;
+export const formatDisplayAccount = (account: string, prefix = 6, suffix = 4) =>
+  `${account.slice(0, prefix)}...${account.slice(-suffix)}`;
 
 export const formatMinaAmount = (
   rawAmount: string | number | bigint,

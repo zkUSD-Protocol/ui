@@ -21,8 +21,8 @@ export function calculateHealthFactor(
   minaPrice: bigint
 ): number {
   // If there's no debt, return maximum health factor
-  if (debtAmount === 0n) {
-    return Number.MAX_SAFE_INTEGER;
+  if (debtAmount === 0n || minaPrice === BigInt(0)) {
+    return 0;
   }
 
   // Calculate USD value of collateral
@@ -54,18 +54,13 @@ export function calculateLTV(
   minaPrice: bigint
 ): number {
   // If there's no collateral, return 100% LTV
-  if (collateralAmount === 0n) {
-    return 0;
+  if (collateralAmount === 0n || minaPrice === BigInt(0)) {
+    return 0.0;
   }
 
   // Calculate USD value of collateral
   const collateralValue =
     (collateralAmount * minaPrice) / BigInt(UNIT_PRECISION);
-
-  // If collateral has no value, return 100% LTV
-  if (collateralValue === 0n) {
-    return 100;
-  }
 
   // Calculate LTV as (debt / collateralValue) * 100
   const ltv = (debtAmount * 100n) / collateralValue;
@@ -73,15 +68,12 @@ export function calculateLTV(
   return Number(ltv);
 }
 
-/**
- * Helper function to determine the color for displaying health factor
- * @param healthFactor - The calculated health factor
- * @returns A string representing the Tailwind CSS color class
- */
-export function getHealthFactorColor(healthFactor: number): string {
-  if (healthFactor >= 150) return "text-green-500";
-  if (healthFactor >= 110) return "text-yellow-500";
-  return "text-red-500";
+export function getHealthFactorRisk(healthFactor: number): string {
+  if (healthFactor >= 150) return "HEALTHY";
+  if (healthFactor >= 130) return "WARNING";
+  if (healthFactor >= 120) return "RISKY";
+  if (healthFactor >= 110) return "DANGER";
+  return "DANGER";
 }
 
 /**

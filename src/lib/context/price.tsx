@@ -12,11 +12,15 @@ interface PriceContextProps {
 const PriceContext = createContext<PriceContextProps | undefined>(undefined);
 
 export function PriceProvider({ children }: { children: React.ReactNode }) {
-  const [minaPrice, setMinaPrice] = useState<bigint>(BigInt(1e9)); // Default to $1
+  const [minaPrice, setMinaPrice] = useState<bigint>(BigInt(0)); // Default to $1
   const { data: latestProof, isLoading, error } = useLatestProof();
 
   useEffect(() => {
     if (latestProof?.publicOutput.minaPrice.priceNanoUSD) {
+      console.log(
+        "Setting mina price",
+        latestProof.publicOutput.minaPrice.priceNanoUSD
+      );
       setMinaPrice(
         BigInt(latestProof.publicOutput.minaPrice.priceNanoUSD.toString())
       );

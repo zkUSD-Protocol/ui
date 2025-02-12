@@ -15,6 +15,8 @@ import { VaultTransactionType } from "zkusd";
 import { VaultState } from "../types";
 import { useAccount } from "./account";
 import { prepareTransaction, signAndProve } from "../utils/transaction";
+import { useTransactionStatus } from "./transaction-status";
+import { useRouter } from "next/navigation";
 // or wherever you keep your engine instance
 // (importing a single shared engine or constructing it once in the app)
 
@@ -44,7 +46,8 @@ export function VaultManagerProvider({
   const { engine, token } = useContracts();
   const [vaultAddresses, setVaultAddresses] = useState<string[]>([]);
   const { account } = useAccount();
-
+  const { setTxStatus, listen, setTxType, setTxError } = useTransactionStatus();
+  const router = useRouter();
   // On first load, read any vault addresses from localStorage.
   useEffect(() => {
     const stored = localStorage.getItem("zkusdVaults");
@@ -80,6 +83,13 @@ export function VaultManagerProvider({
   const createNewVault = useCallback(
     async (vaultPrivateKey: PrivateKey) => {
       try {
+        setTxType(VaultTransactionType.CREATE_VAULT);
+
+        const txId = PrivateKey.random().toBase58();
+
+        // Start listening for tx updates
+        await listen(txId);
+
         const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
         // Create the vault using the provided private key
@@ -87,12 +97,12 @@ export function VaultManagerProvider({
         let newAccounts = 0;
 
         // Check to see if the user already has a zkusd token account
-        await fetchMinaAccount({
+        const zkusdTokenAccount = await fetchMinaAccount({
           publicKey: account!,
           tokenId: token.deriveTokenId(),
         });
 
-        if (!Mina.hasAccount(account!)) {
+        if (!zkusdTokenAccount.account) {
           newAccounts = 2;
         } else {
           newAccounts = 1;
@@ -118,16 +128,22 @@ export function VaultManagerProvider({
           tx,
           memo,
           args: {
+            transactionId: txId,
             vaultAddress,
             newAccounts,
           },
+          setTxStatus,
+          setTxError,
         });
 
-        if (response.success) {
+        const responseData = JSON.parse(response.data);
+
+        if (responseData.txStatus == "Included") {
           // Add to tracked addresses only after successful creation
           setVaultAddresses((prev) =>
             Array.from(new Set([...prev, vaultAddress]))
           );
+          router.push(`/vault/${vaultAddress}`);
         } else {
           throw new Error(response.error || "Failed to create vault");
         }

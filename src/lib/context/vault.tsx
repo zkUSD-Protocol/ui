@@ -7,7 +7,7 @@ import {
   useState,
   useEffect,
 } from "react";
-import { fetchLastBlock, Mina, PublicKey, UInt64 } from "o1js";
+import { fetchLastBlock, Mina, PrivateKey, PublicKey, UInt64 } from "o1js";
 import { CloudWorkerResponse } from "@/lib/types/cloud-worker";
 import { fetchMinaAccount } from "zkcloudworker";
 import { useAccount } from "./account";
@@ -21,6 +21,9 @@ import {
 } from "zkusd";
 import { VaultState } from "../types";
 import { useVaultState } from "../hooks/use-vault-state";
+import { useTransactionStatus } from "./transaction-status";
+import { calculateHealthFactor, calculateLTV } from "../utils/loan";
+import { usePrice } from "./price";
 
 /**
  * This context provides only the contract calls for creating and interacting with vaults,
@@ -34,7 +37,16 @@ interface VaultContextProps {
   burnZkUsd: (amount: UInt64) => Promise<CloudWorkerResponse>;
   liquidate: () => Promise<CloudWorkerResponse>;
   vault: VaultState | null;
-  setVault: (vault: VaultState) => void;
+  initVault: (vaultAddress: string) => void;
+  projectedState:
+    | {
+        healthFactor: number;
+        ltv: number;
+      }
+    | undefined;
+  setProjectedState: (
+    state: { healthFactor: number; ltv: number } | undefined
+  ) => void;
 }
 
 const VaultContext = createContext<VaultContextProps | null>(null);
@@ -43,7 +55,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   // Instances and context hooks
   const { engine } = useContracts();
   const { refetch: refetchLatestProof } = useLatestProof();
-  const { account } = useAccount();
+  const { account, refetchAccount } = useAccount();
+  const { setTxStatus, setTxError, setTxType, listen } = useTransactionStatus();
+  const { minaPrice } = usePrice();
 
   //General state
   const [vault, setVault] = useState<VaultState>({
@@ -51,7 +65,17 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     collateralAmount: BigInt(0),
     debtAmount: BigInt(0),
     owner: "",
+    currentLTV: 0.0,
+    currentHealthFactor: 0,
   });
+
+  const [projectedState, setProjectedState] = useState<
+    | {
+        healthFactor: number;
+        ltv: number;
+      }
+    | undefined
+  >(undefined);
 
   const { refetch: refetchVaultState } = useVaultState(
     vault.vaultAddress,
@@ -60,17 +84,50 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refetchVault = async () => {
     const { data: updatedVault } = await refetchVaultState();
+
+    if (!updatedVault) {
+      console.error("Vault not found");
+      return;
+    }
+
+    const currentLTV = calculateLTV(
+      updatedVault.collateralAmount,
+      updatedVault.debtAmount,
+      minaPrice
+    );
+
+    const currentHealthFactor = calculateHealthFactor(
+      updatedVault.collateralAmount,
+      updatedVault.debtAmount,
+      minaPrice
+    );
+
     setVault((prevVault) => ({
       ...prevVault,
       ...updatedVault,
+      currentLTV,
+      currentHealthFactor,
     }));
+
+    await refetchAccount();
+  };
+
+  const initVault = async (vaultAddress: string) => {
+    setVault({
+      vaultAddress,
+      collateralAmount: BigInt(0),
+      debtAmount: BigInt(0),
+      owner: "",
+      currentLTV: 0.0,
+      currentHealthFactor: 0,
+    });
   };
 
   useEffect(() => {
-    if (!vault.owner) {
+    if (!vault.owner && minaPrice > BigInt(0)) {
       refetchVault();
     }
-  }, [vault]);
+  }, [vault, minaPrice]);
 
   const getMinaPriceInput = async (): Promise<MinaPriceInput> => {
     const { data: latestProof } = await refetchLatestProof();
@@ -116,25 +173,53 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const depositCollateral = useCallback(
     async (amount: UInt64) => {
       try {
-        const tx = await prepareTransaction(
-          async () => {
-            await engine.depositCollateral(
-              PublicKey.fromBase58(vault.vaultAddress),
-              amount
-            );
-          },
-          VaultTransactionType.DEPOSIT_COLLATERAL,
-          account!
-        );
+        setTxType(VaultTransactionType.DEPOSIT_COLLATERAL);
+
+        const txId = PrivateKey.random().toBase58();
+
+        await listen(txId);
+
+        //fetch the vault account
+        const vaultAccount = await fetchMinaAccount({
+          publicKey: PublicKey.fromBase58(vault.vaultAddress),
+          tokenId: engine.deriveTokenId(),
+          force: true,
+        });
+
+        if (!vaultAccount) {
+          throw new Error("Vault account not found");
+        }
+
+        let tx;
+        try {
+          tx = await prepareTransaction(
+            async () => {
+              await engine.depositCollateral(
+                PublicKey.fromBase58(vault.vaultAddress),
+                amount
+              );
+            },
+            VaultTransactionType.DEPOSIT_COLLATERAL,
+            account!
+          );
+        } catch (error: any) {
+          throw {
+            code: 30001,
+            message: error.message,
+          };
+        }
 
         const response = await signAndProve({
           task: VaultTransactionType.DEPOSIT_COLLATERAL,
           tx: tx as any,
           memo: VaultTransactionType.DEPOSIT_COLLATERAL,
           args: {
+            transactionId: txId,
             vaultAddress: vault.vaultAddress,
             collateralAmount: amount.toString(),
           },
+          setTxStatus,
+          setTxError,
         });
 
         await refetchVault();
@@ -144,7 +229,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [engine, vault]
+    [engine, vault, account]
   );
 
   /**
@@ -153,29 +238,46 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const mintZkUsd = useCallback(
     async (amount: UInt64) => {
       try {
+        setTxType(VaultTransactionType.MINT_ZKUSD);
+
+        const txId = PrivateKey.random().toBase58();
+
+        await listen(txId);
+
         const minaPriceInput = await getMinaPriceInput();
 
-        const tx = await prepareTransaction(
-          async () => {
-            await engine.mintZkUsd(
-              PublicKey.fromBase58(vault.vaultAddress),
-              amount,
-              minaPriceInput
-            );
-          },
-          VaultTransactionType.MINT_ZKUSD,
-          account!
-        );
+        let tx;
+        try {
+          tx = await prepareTransaction(
+            async () => {
+              await engine.mintZkUsd(
+                PublicKey.fromBase58(vault.vaultAddress),
+                amount,
+                minaPriceInput
+              );
+            },
+            VaultTransactionType.MINT_ZKUSD,
+            account!
+          );
+        } catch (error: any) {
+          throw {
+            code: 30001,
+            message: error.message,
+          };
+        }
 
         const response = await signAndProve({
           task: VaultTransactionType.MINT_ZKUSD,
           tx: tx as any,
           memo: VaultTransactionType.MINT_ZKUSD,
           args: {
+            transactionId: txId,
             vaultAddress: vault!.vaultAddress!,
             zkusdAmount: amount.toString(),
             minaPriceProof: minaPriceInput.proof.toJSON(),
           },
+          setTxStatus,
+          setTxError,
         });
 
         await refetchVault();
@@ -186,37 +288,52 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [engine, vault]
+    [engine, vault, account]
   );
 
   const redeemCollateral = useCallback(
     async (amount: UInt64) => {
       try {
+        setTxType(VaultTransactionType.REDEEM_COLLATERAL);
+
+        const txId = PrivateKey.random().toBase58();
+
+        await listen(txId);
+
         const minaPriceInput = await getMinaPriceInput();
 
-        console.time("preparing redeem collateral transaction with proof");
-        const tx = await prepareTransaction(
-          async () => {
-            await engine.redeemCollateral(
-              PublicKey.fromBase58(vault.vaultAddress),
-              amount,
-              minaPriceInput
-            );
-          },
-          VaultTransactionType.REDEEM_COLLATERAL,
-          account!
-        );
-        console.timeEnd("preparing redeem collateral transaction with proof");
+        let tx;
+        try {
+          tx = await prepareTransaction(
+            async () => {
+              await engine.redeemCollateral(
+                PublicKey.fromBase58(vault.vaultAddress),
+                amount,
+                minaPriceInput
+              );
+            },
+            VaultTransactionType.REDEEM_COLLATERAL,
+            account!
+          );
+        } catch (error: any) {
+          throw {
+            code: 30001,
+            message: error.message,
+          };
+        }
 
         const response = await signAndProve({
           task: VaultTransactionType.REDEEM_COLLATERAL,
           tx: tx as any,
           memo: VaultTransactionType.REDEEM_COLLATERAL,
           args: {
+            transactionId: txId,
             vaultAddress: vault.vaultAddress,
             collateralAmount: amount.toString(),
             minaPriceProof: minaPriceInput.proof.toJSON(),
           },
+          setTxStatus,
+          setTxError,
         });
 
         await refetchVault();
@@ -227,31 +344,48 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [engine, vault]
+    [engine, vault, account]
   );
 
   const burnZkUsd = useCallback(
     async (amount: UInt64) => {
       try {
-        const tx = await prepareTransaction(
-          async () => {
-            await engine.burnZkUsd(
-              PublicKey.fromBase58(vault.vaultAddress),
-              amount
-            );
-          },
-          VaultTransactionType.BURN_ZKUSD,
-          account!
-        );
+        setTxType(VaultTransactionType.BURN_ZKUSD);
+
+        const txId = PrivateKey.random().toBase58();
+
+        await listen(txId);
+
+        let tx;
+        try {
+          tx = await prepareTransaction(
+            async () => {
+              await engine.burnZkUsd(
+                PublicKey.fromBase58(vault.vaultAddress),
+                amount
+              );
+            },
+            VaultTransactionType.BURN_ZKUSD,
+            account!
+          );
+        } catch (error: any) {
+          throw {
+            code: 30001,
+            message: error.message,
+          };
+        }
 
         const response = await signAndProve({
           task: VaultTransactionType.BURN_ZKUSD,
           tx: tx as any,
           memo: VaultTransactionType.BURN_ZKUSD,
           args: {
+            transactionId: txId,
             vaultAddress: vault.vaultAddress,
             zkusdAmount: amount.toString(),
           },
+          setTxStatus,
+          setTxError,
         });
 
         await refetchVault();
@@ -262,34 +396,49 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [engine, vault]
+    [engine, vault, account]
   );
 
   const liquidate = useCallback(async () => {
     try {
-      console.log("Liquidating vault");
+      setTxType(VaultTransactionType.LIQUIDATE);
+
+      const txId = PrivateKey.random().toBase58();
+
+      await listen(txId);
+
       const minaPriceInput = await getMinaPriceInput();
 
-      console.time("preparing liquidate transaction with proof");
-      const tx = await prepareTransaction(
-        async () => {
-          await engine.liquidate(
-            PublicKey.fromBase58(vault.vaultAddress),
-            minaPriceInput
-          );
-        },
-        VaultTransactionType.LIQUIDATE,
-        account!
-      );
+      let tx;
+      try {
+        tx = await prepareTransaction(
+          async () => {
+            await engine.liquidate(
+              PublicKey.fromBase58(vault.vaultAddress),
+              minaPriceInput
+            );
+          },
+          VaultTransactionType.LIQUIDATE,
+          account!
+        );
+      } catch (error: any) {
+        throw {
+          code: 30001,
+          message: error.message,
+        };
+      }
 
       const response = await signAndProve({
         task: VaultTransactionType.LIQUIDATE,
         tx: tx as any,
         memo: VaultTransactionType.LIQUIDATE,
         args: {
+          transactionId: txId,
           vaultAddress: vault.vaultAddress,
           minaPriceProof: minaPriceInput.proof.toJSON(),
         },
+        setTxStatus,
+        setTxError,
       });
 
       await refetchVault();
@@ -299,7 +448,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Error liquidating vault", error);
       throw error;
     }
-  }, [engine, vault]);
+  }, [engine, vault, account]);
 
   return (
     <VaultContext.Provider
@@ -310,7 +459,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         burnZkUsd,
         liquidate,
         vault,
-        setVault,
+        initVault,
+        projectedState,
+        setProjectedState,
       }}
     >
       {children}
