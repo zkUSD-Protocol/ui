@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const Header = () => {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center h-9">
       <div className="relative w-20 h-5 ">
         <Link href="/">
           <Image

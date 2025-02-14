@@ -33,7 +33,6 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
     projectedState,
     vault,
   } = useVault();
-  if (!vault) return null;
 
   const { minaBalance, zkusdBalance } = useAccount();
   const { minaPrice } = usePrice();
@@ -61,6 +60,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
 
   //Do we disable the action button
   useEffect(() => {
+    if (!vault) return;
     if (
       action !== VaultTransactionType.DEPOSIT_COLLATERAL &&
       vault.collateralAmount === 0n
@@ -74,6 +74,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
   }, []);
 
   useEffect(() => {
+    if (!vault) return;
     if (!amount) {
       setProjectedState(undefined);
       return;

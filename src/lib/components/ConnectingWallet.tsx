@@ -9,36 +9,28 @@ import {
 } from "./ui/dialog";
 import { useTransactionStatus } from "@/lib/context/transaction-status";
 import FadeLoader from "react-spinners/FadeLoader";
-import { ErrorMessage, TransactionProgress } from "@/lib/components";
 import { CircleCheck } from "lucide-react";
-import { CircleX } from "lucide-react";
-import { TxLifecycleStatus } from "zkusd";
+import { useVaultManager } from "../context/vault-manager";
 
-const TransactionStatus = () => {
-  const { txStatus, title, resetTxStatus, txError } = useTransactionStatus();
-  const [open, setOpen] = useState(false);
+type ConnectingWalletProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+const ConnectingWallet = ({ open, onOpenChange }: ConnectingWalletProps) => {
+  const { vaultsLoaded } = useVaultManager();
+
+  const handleOpenChange = (newOpen: boolean) => {
+    onOpenChange(newOpen);
+  };
 
   useEffect(() => {
-    if (!!txStatus && !open) {
-      setOpen(true);
-    }
-
-    if (
-      txStatus === TxLifecycleStatus.SUCCESS ||
-      txStatus === TxLifecycleStatus.FAILED
-    ) {
+    if (vaultsLoaded) {
       setTimeout(() => {
         handleOpenChange(false);
       }, 3000);
     }
-  }, [txStatus]);
-
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      resetTxStatus();
-    }
-  };
+  }, [vaultsLoaded]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -48,20 +40,16 @@ const TransactionStatus = () => {
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="">{title}</DialogTitle>
+          <DialogTitle className="">Connecting Wallet</DialogTitle>
         </DialogHeader>
         <div className="flex items-center h-20 gap-6 justify-center">
-          {txStatus === TxLifecycleStatus.SUCCESS ? (
+          {vaultsLoaded ? (
             <div className="w-20 h-20 flex items-center justify-center">
               <CircleCheck
                 className="text-primary"
                 size={70}
                 strokeWidth={0.5}
               />
-            </div>
-          ) : txStatus === TxLifecycleStatus.FAILED ? (
-            <div className="w-20 h-20 flex items-center justify-center">
-              <CircleX className="text-danger" size={70} strokeWidth={0.5} />
             </div>
           ) : (
             <div className="relative w-20 h-20 flex items-center justify-center">
@@ -82,17 +70,9 @@ const TransactionStatus = () => {
             </div>
           )}
         </div>
-
-        {txError ? (
-          <ErrorMessage error={txError} />
-        ) : (
-          <DialogFooter className="w-full">
-            {txStatus && <TransactionProgress status={txStatus} />}
-          </DialogFooter>
-        )}
       </DialogContent>
     </Dialog>
   );
 };
 
-export default TransactionStatus;
+export default ConnectingWallet;

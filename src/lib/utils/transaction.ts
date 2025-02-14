@@ -81,8 +81,6 @@ const signAndProve = async ({
   setTxError: (txError: string | undefined) => void;
 }) => {
   try {
-    console.log(tx.toPretty());
-
     const serializedTx = serializeTransaction(tx);
 
     setTxStatus(TxLifecycleStatus.SIGNING);

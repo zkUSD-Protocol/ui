@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Providers } from "@/lib/context";
+
 export const metadata: Metadata = {
   title: "zkUSD",
   description: "Stablecoin",

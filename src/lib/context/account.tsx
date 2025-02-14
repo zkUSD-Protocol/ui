@@ -15,6 +15,7 @@ interface AccountContextProps {
   minaBalance: bigint | null;
   zkusdBalance: bigint | null;
   refetchAccount: () => Promise<void>;
+  accountInitialized: boolean;
 }
 
 const AccountContext = createContext<AccountContextProps | null>(null);
@@ -24,15 +25,16 @@ export const AccountProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { token } = useContracts();
+  const { token, networkInitialized } = useContracts();
   const router = useRouter();
   const [account, setAccount] = useState<PublicKey | null>(null);
   const [minaBalance, setMinaBalance] = useState<bigint | null>(null);
   const [zkusdBalance, setZkusdBalance] = useState<bigint | null>(null);
+  const [accountInitialized, setAccountInitialized] = useState(false);
 
   const { refetch: refetchAccountState } = useAccountState(
     account?.toBase58() ?? "",
-    token.deriveTokenId()
+    token?.deriveTokenId() ?? 0
   );
 
   const refetchAccount = async () => {
@@ -46,6 +48,10 @@ export const AccountProvider = ({
       const accounts = await window.mina?.requestAccounts();
       if (!accounts || "code" in accounts) {
         throw new Error("No accounts found");
+      }
+
+      if (!token) {
+        throw new Error("Token is not initialized");
       }
 
       const publicKey = PublicKey.fromBase58(accounts[0]);
@@ -65,27 +71,31 @@ export const AccountProvider = ({
       setMinaBalance(minaAccount.account?.balance.toBigInt() ?? null);
       setZkusdBalance(zkusdAccount.account?.balance.toBigInt() ?? null);
       sessionStorage.setItem("wallet-connected", "true");
-
-      console.log("ACCOUNT AND BALANCE SET");
     } catch (error) {
       console.error("Failed to connect account:", error);
       throw error;
+    } finally {
+      setAccountInitialized(true);
     }
   };
 
   const disconnect = () => {
     setAccount(null);
     sessionStorage.setItem("wallet-connected", "false");
-    router.push("/");
+    router.push("/connect");
   };
 
   // Auto-connect on mount
   useEffect(() => {
+    if (!networkInitialized) return;
     const isConnected = sessionStorage.getItem("wallet-connected") === "true";
     if (isConnected) {
       connect().catch(console.error);
+    } else {
+      setAccountInitialized(true);
+      router.push("/");
     }
-  }, []);
+  }, [networkInitialized]);
 
   useEffect(() => {
     refetchAccount();
@@ -101,6 +111,7 @@ export const AccountProvider = ({
         connect,
         disconnect,
         refetchAccount,
+        accountInitialized,
       }}
     >
       {children}

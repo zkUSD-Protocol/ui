@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Mina, PublicKey, UInt32 } from "o1js";
 import {
   ZkUsdEngineContract,
@@ -14,8 +20,9 @@ import { blockchain, initBlockchain } from "zkcloudworker";
  * If you have multiple contract instances, include them here.
  */
 interface ContractsContextValue {
-  engine: InstanceType<ReturnType<typeof ZkUsdEngineContract>>;
-  token: InstanceType<ReturnType<typeof FungibleTokenContract>>;
+  engine: InstanceType<ReturnType<typeof ZkUsdEngineContract>> | null;
+  token: InstanceType<ReturnType<typeof FungibleTokenContract>> | null;
+  networkInitialized: boolean;
 }
 
 /**
@@ -31,16 +38,20 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
   // Example: If you need to set the active instance for Mina:
   // e.g. Mina.setActiveInstance(Mina.LocalBlockchain()); or some testnet config.
 
-  const initializeNetwork = async () => {
-    await initBlockchain(process.env.NEXT_PUBLIC_CHAIN! as blockchain);
-  };
+  const [networkInitialized, setNetworkInitialized] = useState(false);
 
   useEffect(() => {
+    const initializeNetwork = async () => {
+      await initBlockchain(process.env.NEXT_PUBLIC_CHAIN! as blockchain);
+      setNetworkInitialized(true);
+    };
     initializeNetwork();
   }, []);
 
-  // Build your engine instance (using environment variables)
   const contracts = useMemo(() => {
+    if (!networkInitialized) {
+      return { engine: null, token: null, networkIsInitialized: false };
+    }
     const tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS;
     const engineAddress = process.env.NEXT_PUBLIC_ENGINE_ADDRESS;
     if (!tokenAddress || !engineAddress) {
@@ -48,25 +59,20 @@ export function ContractsProvider({ children }: { children: React.ReactNode }) {
         "Missing environment variables for engine contract addresses"
       );
     }
-
-    // Get the engine contract class definition
     const ZkUsdEngine = ZkUsdEngineContract({
       zkUsdTokenAddress: PublicKey.fromBase58(tokenAddress),
       minaPriceInputZkProgramVkHash: oracleAggregationVk.hash,
     });
-
     const FungibleToken = ZkUsdEngine.FungibleToken;
 
     const engine = new ZkUsdEngine(PublicKey.fromBase58(engineAddress));
     const token = new FungibleToken(PublicKey.fromBase58(tokenAddress));
 
     return { engine, token };
-  }, []);
-
-  const value = useMemo<ContractsContextValue>(() => contracts, [contracts]);
+  }, [networkInitialized]);
 
   return (
-    <ContractsContext.Provider value={value}>
+    <ContractsContext.Provider value={{ ...contracts, networkInitialized }}>
       {children}
     </ContractsContext.Provider>
   );

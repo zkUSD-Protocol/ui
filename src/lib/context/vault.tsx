@@ -20,10 +20,10 @@ import {
   VaultTransactionType,
 } from "zkusd";
 import { VaultState } from "../types";
-import { useVaultState } from "../hooks/use-vault-state";
 import { useTransactionStatus } from "./transaction-status";
 import { calculateHealthFactor, calculateLTV } from "../utils/loan";
 import { usePrice } from "./price";
+import { Vault } from "zkusd";
 
 /**
  * This context provides only the contract calls for creating and interacting with vaults,
@@ -37,7 +37,8 @@ interface VaultContextProps {
   burnZkUsd: (amount: UInt64) => Promise<CloudWorkerResponse>;
   liquidate: () => Promise<CloudWorkerResponse>;
   vault: VaultState | null;
-  initVault: (vaultAddress: string) => void;
+  initVault: (vaultAddress: string) => Promise<VaultState>;
+  refetchVault: () => Promise<void>;
   projectedState:
     | {
         healthFactor: number;
@@ -53,21 +54,14 @@ const VaultContext = createContext<VaultContextProps | null>(null);
 
 export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   // Instances and context hooks
-  const { engine } = useContracts();
+  const { engine, networkInitialized } = useContracts();
   const { refetch: refetchLatestProof } = useLatestProof();
   const { account, refetchAccount } = useAccount();
   const { setTxStatus, setTxError, setTxType, listen } = useTransactionStatus();
   const { minaPrice } = usePrice();
 
   //General state
-  const [vault, setVault] = useState<VaultState>({
-    vaultAddress: "",
-    collateralAmount: BigInt(0),
-    debtAmount: BigInt(0),
-    owner: "",
-    currentLTV: 0.0,
-    currentHealthFactor: 0,
-  });
+  const [vault, setVault] = useState<VaultState | null>(null);
 
   const [projectedState, setProjectedState] = useState<
     | {
@@ -77,62 +71,71 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     | undefined
   >(undefined);
 
-  const { refetch: refetchVaultState } = useVaultState(
-    vault.vaultAddress,
-    engine
-  );
-
-  const refetchVault = async () => {
-    const { data: updatedVault } = await refetchVaultState();
-
-    if (!updatedVault) {
-      console.error("Vault not found");
-      return;
+  const fetchVaultState = async (vaultAddress: string): Promise<VaultState> => {
+    if (!networkInitialized) {
+      throw new Error("Network is not initialized");
     }
 
-    const currentLTV = calculateLTV(
-      updatedVault.collateralAmount,
-      updatedVault.debtAmount,
-      minaPrice
-    );
+    // Fetch the vault account
+    const vaultAccount = await fetchMinaAccount({
+      publicKey: PublicKey.fromBase58(vaultAddress),
+      tokenId: engine?.deriveTokenId(),
+      force: true,
+    });
+
+    if (!vaultAccount.account) {
+      throw new Error("Vault not found");
+    }
+
+    const vaultState = Vault.fromAccount(vaultAccount.account);
+
+    const collateralAmount = vaultState.collateralAmount.toBigInt();
+    const debtAmount = vaultState.debtAmount.toBigInt();
+    const ownerPublicKey = vaultState.owner;
+    const owner = ownerPublicKey?.toBase58() ?? "Not Found";
+
+    const currentLTV = calculateLTV(collateralAmount, debtAmount, minaPrice);
 
     const currentHealthFactor = calculateHealthFactor(
-      updatedVault.collateralAmount,
-      updatedVault.debtAmount,
+      collateralAmount,
+      debtAmount,
       minaPrice
     );
 
-    setVault((prevVault) => ({
-      ...prevVault,
-      ...updatedVault,
+    return {
+      vaultAddress,
+      collateralAmount,
+      debtAmount,
+      owner,
       currentLTV,
       currentHealthFactor,
-    }));
-
-    await refetchAccount();
+    };
   };
 
-  const initVault = async (vaultAddress: string) => {
-    setVault({
-      vaultAddress,
-      collateralAmount: BigInt(0),
-      debtAmount: BigInt(0),
-      owner: "",
-      currentLTV: 0.0,
-      currentHealthFactor: 0,
-    });
-  };
-
-  useEffect(() => {
-    if (!vault.owner && minaPrice > BigInt(0)) {
-      refetchVault();
+  const initVault = async (vaultAddress: string): Promise<VaultState> => {
+    try {
+      const vaultState = await fetchVaultState(vaultAddress);
+      setVault(vaultState);
+      return vaultState;
+    } catch (error) {
+      console.error("Error initializing vault:", error);
+      throw error;
     }
-  }, [vault, minaPrice]);
+  };
+
+  const refetchVault = async () => {
+    if (!vault?.vaultAddress) return;
+    try {
+      const vaultState = await fetchVaultState(vault.vaultAddress);
+      setVault(vaultState);
+    } catch (error) {
+      console.error("Error refetching vault:", error);
+      throw error;
+    }
+  };
 
   const getMinaPriceInput = async (): Promise<MinaPriceInput> => {
     const { data: latestProof } = await refetchLatestProof();
-
-    console.log("Latest Proof", latestProof);
 
     if (!latestProof) {
       throw new Error("No latest proof found");
@@ -144,9 +147,6 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     ).blockchainLength.toBigint();
     const proofBlockHeight =
       latestProof.publicOutput.minaPrice.currentBlockHeight.toBigint();
-
-    console.log("Current Block", currentBlockHeight);
-    console.log("Proof Block", proofBlockHeight);
 
     //the proofBlockHeight needs to be within 2
 
@@ -181,8 +181,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
         //fetch the vault account
         const vaultAccount = await fetchMinaAccount({
-          publicKey: PublicKey.fromBase58(vault.vaultAddress),
-          tokenId: engine.deriveTokenId(),
+          publicKey: PublicKey.fromBase58(vault?.vaultAddress || ""),
+          tokenId: engine?.deriveTokenId(),
           force: true,
         });
 
@@ -194,8 +194,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           tx = await prepareTransaction(
             async () => {
-              await engine.depositCollateral(
-                PublicKey.fromBase58(vault.vaultAddress),
+              await engine?.depositCollateral(
+                PublicKey.fromBase58(vault?.vaultAddress || ""),
                 amount
               );
             },
@@ -215,7 +215,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
           memo: VaultTransactionType.DEPOSIT_COLLATERAL,
           args: {
             transactionId: txId,
-            vaultAddress: vault.vaultAddress,
+            vaultAddress: vault?.vaultAddress || "",
             collateralAmount: amount.toString(),
           },
           setTxStatus,
@@ -250,8 +250,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           tx = await prepareTransaction(
             async () => {
-              await engine.mintZkUsd(
-                PublicKey.fromBase58(vault.vaultAddress),
+              await engine?.mintZkUsd(
+                PublicKey.fromBase58(vault?.vaultAddress || ""),
                 amount,
                 minaPriceInput
               );
@@ -272,7 +272,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
           memo: VaultTransactionType.MINT_ZKUSD,
           args: {
             transactionId: txId,
-            vaultAddress: vault!.vaultAddress!,
+            vaultAddress: vault?.vaultAddress || "",
             zkusdAmount: amount.toString(),
             minaPriceProof: minaPriceInput.proof.toJSON(),
           },
@@ -306,8 +306,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           tx = await prepareTransaction(
             async () => {
-              await engine.redeemCollateral(
-                PublicKey.fromBase58(vault.vaultAddress),
+              await engine?.redeemCollateral(
+                PublicKey.fromBase58(vault?.vaultAddress || ""),
                 amount,
                 minaPriceInput
               );
@@ -328,7 +328,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
           memo: VaultTransactionType.REDEEM_COLLATERAL,
           args: {
             transactionId: txId,
-            vaultAddress: vault.vaultAddress,
+            vaultAddress: vault?.vaultAddress || "",
             collateralAmount: amount.toString(),
             minaPriceProof: minaPriceInput.proof.toJSON(),
           },
@@ -360,8 +360,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           tx = await prepareTransaction(
             async () => {
-              await engine.burnZkUsd(
-                PublicKey.fromBase58(vault.vaultAddress),
+              await engine?.burnZkUsd(
+                PublicKey.fromBase58(vault?.vaultAddress || ""),
                 amount
               );
             },
@@ -381,7 +381,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
           memo: VaultTransactionType.BURN_ZKUSD,
           args: {
             transactionId: txId,
-            vaultAddress: vault.vaultAddress,
+            vaultAddress: vault?.vaultAddress || "",
             zkusdAmount: amount.toString(),
           },
           setTxStatus,
@@ -413,8 +413,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         tx = await prepareTransaction(
           async () => {
-            await engine.liquidate(
-              PublicKey.fromBase58(vault.vaultAddress),
+            await engine?.liquidate(
+              PublicKey.fromBase58(vault?.vaultAddress || ""),
               minaPriceInput
             );
           },
@@ -434,7 +434,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         memo: VaultTransactionType.LIQUIDATE,
         args: {
           transactionId: txId,
-          vaultAddress: vault.vaultAddress,
+          vaultAddress: vault?.vaultAddress || "",
           minaPriceProof: minaPriceInput.proof.toJSON(),
         },
         setTxStatus,
@@ -460,6 +460,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         liquidate,
         vault,
         initVault,
+        refetchVault,
         projectedState,
         setProjectedState,
       }}

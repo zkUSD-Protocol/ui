@@ -1,10 +1,8 @@
-export { default as AppOnboarding } from "./AppOnboarding";
 export { default as ConnectWallet } from "./ConnectWallet";
 export { default as CreateVault } from "./CreateVault";
 export { default as ErrorMessage } from "./ErrorMessage";
 export { default as Header } from "./Header";
 export { default as ImportVault } from "./ImportVault";
-export { default as VaultSummaryCard } from "./VaultSummaryCard";
 export { default as VaultSelect } from "./VaultSelect";
 export { default as TransactionStatus } from "./TransactionStatus";
 export { default as TransactionProgress } from "./TransactionProgress";
