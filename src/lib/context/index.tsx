@@ -5,7 +5,7 @@ import { VaultProvider } from "./vault";
 import { AccountProvider } from "./account";
 
 import { VaultManagerProvider } from "./vault-manager";
-import { ContractsProvider } from "./contracts";
+import { ClientProvider } from "./client";
 import { PriceProvider } from "./price";
 import { TransactionStatusProvider } from "./transaction-status";
 
@@ -19,7 +19,7 @@ const queryClient = new QueryClient();
 export function Providers({ children, initialState }: ProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ContractsProvider>
+      <ClientProvider>
         <AccountProvider>
           <TransactionStatusProvider>
             <PriceProvider>
@@ -29,7 +29,7 @@ export function Providers({ children, initialState }: ProviderProps) {
             </PriceProvider>
           </TransactionStatusProvider>
         </AccountProvider>
-      </ContractsProvider>
+      </ClientProvider>
     </QueryClientProvider>
   );
 }

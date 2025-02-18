@@ -2,8 +2,8 @@
 
 import { PublicKey } from "o1js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchMinaAccount } from "zkcloudworker";
-import { useContracts } from "./contracts";
+import { fetchMinaAccount } from "zkusd";
+import { useClient } from "./client";
 import { useAccountState } from "../hooks/use-account-state";
 import { useRouter } from "next/navigation";
 
@@ -25,7 +25,7 @@ export const AccountProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { token, networkInitialized } = useContracts();
+  const { zkusd } = useClient();
   const router = useRouter();
   const [account, setAccount] = useState<PublicKey | null>(null);
   const [minaBalance, setMinaBalance] = useState<bigint | null>(null);
@@ -34,7 +34,7 @@ export const AccountProvider = ({
 
   const { refetch: refetchAccountState } = useAccountState(
     account?.toBase58() ?? "",
-    token?.deriveTokenId() ?? 0
+    zkusd?.getTokenId() ?? 0
   );
 
   const refetchAccount = async () => {
@@ -50,10 +50,6 @@ export const AccountProvider = ({
         throw new Error("No accounts found");
       }
 
-      if (!token) {
-        throw new Error("Token is not initialized");
-      }
-
       const publicKey = PublicKey.fromBase58(accounts[0]);
       //Lets fetch the balance of the account
       const minaAccount = await fetchMinaAccount({
@@ -63,7 +59,7 @@ export const AccountProvider = ({
 
       const zkusdAccount = await fetchMinaAccount({
         publicKey,
-        tokenId: token.deriveTokenId(),
+        tokenId: zkusd?.getTokenId() ?? 0,
         force: true,
       });
 
@@ -87,7 +83,7 @@ export const AccountProvider = ({
 
   // Auto-connect on mount
   useEffect(() => {
-    if (!networkInitialized) return;
+    if (!zkusd) return;
     const isConnected = sessionStorage.getItem("wallet-connected") === "true";
     if (isConnected) {
       connect().catch(console.error);
@@ -95,7 +91,7 @@ export const AccountProvider = ({
       setAccountInitialized(true);
       router.push("/");
     }
-  }, [networkInitialized]);
+  }, [zkusd]);
 
   useEffect(() => {
     refetchAccount();

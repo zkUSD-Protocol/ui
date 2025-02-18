@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useContracts } from "@/lib/context/contracts";
+import { useClient } from "@/lib/context/client";
 import { useAccount } from "@/lib/context/account";
 import { useVaultManager } from "@/lib/context/vault-manager";
 import FadeLoader from "react-spinners/FadeLoader";
@@ -16,12 +16,12 @@ export default function AppInitializer({ children }: AppInitializerProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { networkInitialized } = useContracts();
+  const { zkusd } = useClient();
   const { accountInitialized, isConnected } = useAccount();
   const { vaultAddresses, vaultsLoaded } = useVaultManager();
 
   // App is ready when all async pieces are loaded.
-  const appReady = networkInitialized && accountInitialized && vaultsLoaded;
+  const appReady = zkusd && accountInitialized && vaultsLoaded;
 
   // Define the default route based on the state.
   const defaultRoute = !isConnected

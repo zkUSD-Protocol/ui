@@ -8,11 +8,9 @@ import React, {
   useState,
 } from "react";
 import { PublicKey, PrivateKey, AccountUpdate } from "o1js";
-import { useContracts } from "./contracts";
-import { fetchMinaAccount } from "zkcloudworker";
-import { Vault, VaultTransactionType } from "zkusd";
+import { useClient } from "./client";
+import { TxLifecycleStatus, Vault, fetchMinaAccount } from "zkusd";
 import { useAccount } from "./account";
-import { prepareTransaction, signAndProve } from "../utils/transaction";
 import { useTransactionStatus } from "./transaction-status";
 import { useRouter } from "next/navigation";
 
@@ -40,14 +38,12 @@ export function VaultManagerProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { engine, token } = useContracts();
+  const { zkusd } = useClient();
   const { account, accountInitialized } = useAccount();
-  const { setTxStatus, listen, setTxType, setTxError } = useTransactionStatus();
-  const router = useRouter();
-
+  const { setTxStatus, setTxType, setTxError } = useTransactionStatus();
   const [vaultAddresses, setVaultAddresses] = useState<string[] | null>(null);
   const [vaultsLoaded, setVaultsLoaded] = useState(false);
-
+  const router = useRouter();
   // Load vaults from localStorage when the account changes.
   useEffect(() => {
     async function loadVaults() {
@@ -73,11 +69,8 @@ export function VaultManagerProvider({
       const validVaults = await Promise.all(
         accountVaults.map(async (address) => {
           try {
-            const vaultAccount = await fetchMinaAccount({
-              publicKey: PublicKey.fromBase58(address),
-              tokenId: engine?.deriveTokenId(),
-            });
-            return vaultAccount.account ? address : null;
+            const vaultAccount = await zkusd?.fetchVaultAccount(address);
+            return vaultAccount ? address : null;
           } catch {
             return null;
           }
@@ -96,7 +89,7 @@ export function VaultManagerProvider({
       setVaultsLoaded(true);
     }
     loadVaults();
-  }, [account, accountInitialized, engine]);
+  }, [account, accountInitialized, zkusd]);
 
   // Sync vaultAddresses state to localStorage whenever it changes.
   useEffect(() => {
@@ -124,58 +117,30 @@ export function VaultManagerProvider({
   // Create a new vault and add its address to state.
   const createNewVault = useCallback(
     async (vaultPrivateKey: PrivateKey) => {
-      if (!account || !engine || !token) return;
-      try {
-        setTxType(VaultTransactionType.CREATE_VAULT);
-        const txId = PrivateKey.random().toBase58();
-        await listen(txId);
-        const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
-        const memo = VaultTransactionType.CREATE_VAULT;
+      if (!account || !zkusd) return;
 
-        // Determine the number of new accounts needed.
-        const zkusdTokenAccount = await fetchMinaAccount({
-          publicKey: account,
-          tokenId: token.deriveTokenId(),
-        });
-        const newAccounts = zkusdTokenAccount.account ? 1 : 2;
+      const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
-        // Prepare and sign the transaction.
-        const tx = await prepareTransaction(
-          async () => {
-            AccountUpdate.fundNewAccount(account, newAccounts);
-            await engine.createVault(PublicKey.fromBase58(vaultAddress));
-          },
-          memo,
-          account
-        );
-        tx.sign([vaultPrivateKey]);
+      const txHandle = await zkusd?.createVault(account, vaultPrivateKey, {
+        extraSigners: [vaultPrivateKey],
+      });
 
-        // Broadcast the transaction.
-        const response = await signAndProve({
-          task: VaultTransactionType.CREATE_VAULT,
-          tx,
-          memo,
-          args: { transactionId: txId, vaultAddress, newAccounts },
-          setTxStatus,
-          setTxError,
-        });
+      txHandle?.subscribeToLifecycleChange((status: TxLifecycleStatus) => {
+        console.log(status);
+        setTxStatus(status);
+        if (status === TxLifecycleStatus.FAILED) {
+          setTxError("Something went wrong, please try again!");
+        }
 
-        const responseData = JSON.parse(response.data);
-        if (responseData.txStatus === "Included") {
-          // Update state with the new vault.
+        if (status === TxLifecycleStatus.SUCCESS) {
           setVaultAddresses((prev) =>
             Array.from(new Set([...(prev || []), vaultAddress]))
           );
           router.push(`/vault/${vaultAddress}`);
-        } else {
-          throw new Error(response.error || "Failed to create vault");
         }
-      } catch (error) {
-        console.error("Error creating vault:", error);
-        throw error;
-      }
+      });
     },
-    [account, engine, token, listen, setTxType, setTxStatus, setTxError, router]
+    [account, zkusd, setTxStatus, setTxError]
   );
 
   // Remove a vault address from state.
@@ -188,16 +153,9 @@ export function VaultManagerProvider({
   // Import a vault address after verifying its existence and ownership.
   const importVaultAddress = useCallback(
     async (vaultAddress: string): Promise<string | void> => {
-      if (!account || !engine) return;
+      if (!account || !zkusd) return;
       try {
-        const vaultAccount = await fetchMinaAccount({
-          publicKey: PublicKey.fromBase58(vaultAddress),
-          tokenId: engine.deriveTokenId(),
-        });
-        if (!vaultAccount.account) {
-          return "Vault not found";
-        }
-        const vaultState = Vault.fromAccount(vaultAccount.account);
+        const vaultState = await zkusd.getVaultState(vaultAddress);
         if (vaultState.owner.toBase58() !== account.toBase58()) {
           return "You are not the owner of this vault";
         }
@@ -210,7 +168,7 @@ export function VaultManagerProvider({
         throw error;
       }
     },
-    [account, engine]
+    [account, zkusd]
   );
 
   return (

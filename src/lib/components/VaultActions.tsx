@@ -13,7 +13,6 @@ import { formatMinaAmount, toRawMinaAmount } from "../utils/formatting";
 import { useAccount } from "../context/account";
 import { useVault } from "../context/vault";
 import { UInt64 } from "o1js";
-import { CloudWorkerResponse } from "../types";
 import { calculateHealthFactor, calculateLTV } from "../utils/loan";
 import { usePrice } from "../context/price";
 import { VaultTransactionType } from "zkusd";
@@ -42,9 +41,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
 
   const [isDisabled, setIsDisabled] = useState<boolean>(false);
 
-  const handleAction = async (
-    action: (amount: UInt64) => Promise<CloudWorkerResponse>
-  ) => {
+  const handleAction = async (action: (amount: UInt64) => Promise<void>) => {
     if (!amount) return;
     try {
       await action(new UInt64(toRawMinaAmount(amount)));
@@ -144,7 +141,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
     heading: string;
     buttonText: string;
     placeholder: string;
-    handler: (amount: UInt64) => Promise<CloudWorkerResponse>;
+    handler: (amount: UInt64) => Promise<void>;
   }
 
   type VaultActionTypes = Omit<

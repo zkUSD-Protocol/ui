@@ -13,37 +13,41 @@ export function TransactionProgress({ status }: TransactionProgressProps) {
         return 1;
       case TxLifecycleStatus.PREPARING:
         return 2;
-      case TxLifecycleStatus.COMPILING:
-        return 3;
       case TxLifecycleStatus.PROVING:
+        return 3;
+      case TxLifecycleStatus.SCHEDULED:
         return 4;
-      case TxLifecycleStatus.AWAITING_INCLUSION:
+      case TxLifecycleStatus.PENDING:
         return 5;
-      case TxLifecycleStatus.SUCCESS:
+      case TxLifecycleStatus.AWAITING_INCLUSION:
         return 6;
+      case TxLifecycleStatus.SUCCESS:
+        return 7;
       default:
         return 0;
     }
   };
 
   // Get progress percentage
-  const progress = (getStepNumber(status) / 6) * 100;
+  const progress = (getStepNumber(status) / 7) * 100;
 
   // Get status message
   const getStatusMessage = (status: TxLifecycleStatus): string => {
     switch (status) {
       case TxLifecycleStatus.SIGNING:
-        return "1/6 - Sign the transaction with your wallet";
+        return "1/7 - Sign the transaction with your wallet";
       case TxLifecycleStatus.PREPARING:
-        return "2/6 - Preparing the transaction";
-      case TxLifecycleStatus.COMPILING:
-        return "3/6 - Compiling the contracts";
+        return "2/7 - Preparing the transaction";
       case TxLifecycleStatus.PROVING:
-        return "4/6 - Proving the transaction";
+        return "3/7 - Proving the transaction";
+      case TxLifecycleStatus.SCHEDULED:
+        return "4/7 - Scheduling the transaction";
+      case TxLifecycleStatus.PENDING:
+        return "5/7 - Transaction is pending";
       case TxLifecycleStatus.AWAITING_INCLUSION:
-        return "5/6 - Awaiting inclusion in a block";
+        return "6/7 - Awaiting inclusion in a block";
       case TxLifecycleStatus.SUCCESS:
-        return "6/6 - Transaction included";
+        return "7/7 - Transaction included";
       default:
         return "Transaction status unknown";
     }

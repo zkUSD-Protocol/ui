@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { VaultOverview } from "@/lib/components/";
 import { useAccount } from "@/lib/context/account";
 import { useRouter } from "next/navigation";
-import { useContracts } from "@/lib/context/contracts";
+import { useClient } from "@/lib/context/client";
 import { usePrice } from "@/lib/context/price";
 import { useVaultManager } from "@/lib/context/vault-manager";
 import { formatMinaAmount } from "@/lib/utils/formatting";
@@ -14,20 +14,20 @@ import { formatMinaAmount } from "@/lib/utils/formatting";
 export default function VaultPage({ params }: { params: { address: string } }) {
   const { initVault, vault } = useVault();
   const { isConnected, account } = useAccount();
-  const { networkInitialized } = useContracts();
+  const { zkusd } = useClient();
   const router = useRouter();
   const { vaultAddresses } = useVaultManager();
   const { minaPrice, isLoading: isMinaPriceLoading } = usePrice();
 
   useEffect(() => {
     const loadVault = async () => {
-      if (!networkInitialized || !account) return;
+      if (!zkusd || !account) return;
 
       await initVault(params.address);
     };
 
     loadVault();
-  }, [params.address, networkInitialized, account]);
+  }, [params.address, zkusd, account]);
 
   return (
     <>

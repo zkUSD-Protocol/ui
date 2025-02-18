@@ -1,5 +1,4 @@
-import { Mina, PublicKey } from "o1js";
-import { fee } from "zkcloudworker";
+import { Mina, PublicKey, UInt64 } from "o1js";
 import { CloudWorkerRequest, CloudWorkerResponse } from "../types/cloud-worker";
 import { VaultTransactionArgs, VaultTransactionType } from "zkusd";
 import { TxLifecycleStatus } from "zkusd";
@@ -21,7 +20,7 @@ const prepareTransaction = async (
     const tx = await Mina.transaction(
       {
         sender: account,
-        fee: await fee(),
+        fee: UInt64.from(1e8),
         memo,
       },
       async () => {
