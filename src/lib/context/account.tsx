@@ -2,7 +2,7 @@
 
 import { PublicKey } from "o1js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchMinaAccount } from "zkusd";
+import { fetchMinaAccount } from "@zkusd/core";
 import { useClient } from "./client";
 import { useAccountState } from "../hooks/use-account-state";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,7 @@ export const AccountProvider = ({
 
   const { refetch: refetchAccountState } = useAccountState(
     account?.toBase58() ?? "",
-    zkusd?.getTokenId() ?? 0
+    zkusd?.getTokenId("token") ?? 0
   );
 
   const refetchAccount = async () => {
@@ -59,7 +59,7 @@ export const AccountProvider = ({
 
       const zkusdAccount = await fetchMinaAccount({
         publicKey,
-        tokenId: zkusd?.getTokenId() ?? 0,
+        tokenId: zkusd?.getTokenId("token") ?? 0,
         force: true,
       });
 

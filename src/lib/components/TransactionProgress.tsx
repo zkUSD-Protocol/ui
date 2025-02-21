@@ -1,5 +1,5 @@
 import { Progress } from "@/lib/components/ui/progress";
-import { TxLifecycleStatus } from "zkusd";
+import { TxLifecycleStatus } from "@zkusd/core";
 
 interface TransactionProgressProps {
   status: TxLifecycleStatus;
@@ -9,9 +9,9 @@ export function TransactionProgress({ status }: TransactionProgressProps) {
   // Map status to step number (1-6)
   const getStepNumber = (status: TxLifecycleStatus): number => {
     switch (status) {
-      case TxLifecycleStatus.SIGNING:
-        return 1;
       case TxLifecycleStatus.PREPARING:
+        return 1;
+      case TxLifecycleStatus.SIGNING:
         return 2;
       case TxLifecycleStatus.PROVING:
         return 3;
@@ -34,10 +34,10 @@ export function TransactionProgress({ status }: TransactionProgressProps) {
   // Get status message
   const getStatusMessage = (status: TxLifecycleStatus): string => {
     switch (status) {
-      case TxLifecycleStatus.SIGNING:
-        return "1/7 - Sign the transaction with your wallet";
       case TxLifecycleStatus.PREPARING:
-        return "2/7 - Preparing the transaction";
+        return "1/7 - Preparing the transaction";
+      case TxLifecycleStatus.SIGNING:
+        return "2/7 - Sign the transaction with your wallet";
       case TxLifecycleStatus.PROVING:
         return "3/7 - Proving the transaction";
       case TxLifecycleStatus.SCHEDULED:

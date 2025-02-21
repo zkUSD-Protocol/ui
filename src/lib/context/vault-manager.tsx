@@ -7,9 +7,9 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { PublicKey, PrivateKey, AccountUpdate } from "o1js";
+import { PublicKey, PrivateKey, AccountUpdate, Field } from "o1js";
 import { useClient } from "./client";
-import { TxLifecycleStatus, Vault, fetchMinaAccount } from "zkusd";
+import { TxLifecycleStatus, Vault, fetchMinaAccount } from "@zkusd/core";
 import { useAccount } from "./account";
 import { useTransactionStatus } from "./transaction-status";
 import { useRouter } from "next/navigation";
@@ -121,12 +121,14 @@ export function VaultManagerProvider({
 
       const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
+      setTxStatus(TxLifecycleStatus.PREPARING);
+
       const txHandle = await zkusd?.createVault(account, vaultPrivateKey, {
         extraSigners: [vaultPrivateKey],
+        printTx: true,
       });
 
       txHandle?.subscribeToLifecycleChange((status: TxLifecycleStatus) => {
-        console.log(status);
         setTxStatus(status);
         if (status === TxLifecycleStatus.FAILED) {
           setTxError("Something went wrong, please try again!");

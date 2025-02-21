@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { JsonProof } from "o1js";
-import { AggregateOraclePricesProof } from "zkusd";
+import { AggregateOraclePricesProof } from "@zkusd/core";
 
 export function useLatestProof() {
   return useQuery({

@@ -15,10 +15,10 @@ import { useVault } from "../context/vault";
 import { UInt64 } from "o1js";
 import { calculateHealthFactor, calculateLTV } from "../utils/loan";
 import { usePrice } from "../context/price";
-import { VaultTransactionType } from "zkusd";
+import { ZkusdEngineTransactionType } from "@zkusd/core";
 
 interface ActionCardProps {
-  action: VaultTransactionType;
+  action: ZkusdEngineTransactionType;
   type: "mina" | "zkusd";
 }
 
@@ -59,13 +59,16 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
   useEffect(() => {
     if (!vault) return;
     if (
-      action !== VaultTransactionType.DEPOSIT_COLLATERAL &&
+      action !== ZkusdEngineTransactionType.DEPOSIT_COLLATERAL &&
       vault.collateralAmount === 0n
     ) {
       setIsDisabled(true);
     }
 
-    if (action == VaultTransactionType.BURN_ZKUSD && vault.debtAmount === 0n) {
+    if (
+      action == ZkusdEngineTransactionType.BURN_ZKUSD &&
+      vault.debtAmount === 0n
+    ) {
       setIsDisabled(true);
     }
   }, []);
@@ -81,7 +84,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
     let projectedDebtAmount = vault.debtAmount;
 
     switch (action) {
-      case VaultTransactionType.DEPOSIT_COLLATERAL:
+      case ZkusdEngineTransactionType.DEPOSIT_COLLATERAL:
         projectedCollateralAmount =
           projectedCollateralAmount + BigInt(toRawMinaAmount(amount));
 
@@ -90,12 +93,12 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
         }
 
         break;
-      case VaultTransactionType.MINT_ZKUSD:
+      case ZkusdEngineTransactionType.MINT_ZKUSD:
         projectedDebtAmount =
           projectedDebtAmount + BigInt(toRawMinaAmount(amount));
 
         break;
-      case VaultTransactionType.BURN_ZKUSD:
+      case ZkusdEngineTransactionType.BURN_ZKUSD:
         projectedDebtAmount =
           projectedDebtAmount - BigInt(toRawMinaAmount(amount));
 
@@ -104,7 +107,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
         }
 
         break;
-      case VaultTransactionType.REDEEM_COLLATERAL:
+      case ZkusdEngineTransactionType.REDEEM_COLLATERAL:
         projectedCollateralAmount =
           projectedCollateralAmount - BigInt(toRawMinaAmount(amount));
 
@@ -145,30 +148,35 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
   }
 
   type VaultActionTypes = Omit<
-    Record<VaultTransactionType, ActionConfig>,
-    VaultTransactionType.LIQUIDATE | VaultTransactionType.CREATE_VAULT
+    Record<ZkusdEngineTransactionType, ActionConfig>,
+    | ZkusdEngineTransactionType.LIQUIDATE
+    | ZkusdEngineTransactionType.CREATE_VAULT
+    | ZkusdEngineTransactionType.UPDATE_ADMIN
+    | ZkusdEngineTransactionType.UPDATE_VALID_PRICE_BLOCK_COUNT
+    | ZkusdEngineTransactionType.UPDATE_ORACLE_WHITELIST
+    | ZkusdEngineTransactionType.TOGGLE_EMERGENCY_STOP
   >;
 
   const actionConfig: VaultActionTypes = {
-    [VaultTransactionType.DEPOSIT_COLLATERAL]: {
+    [ZkusdEngineTransactionType.DEPOSIT_COLLATERAL]: {
       heading: "Deposit MINA into your vault",
       buttonText: "Deposit",
       placeholder: "Amount in MINA",
       handler: depositCollateral,
     },
-    [VaultTransactionType.MINT_ZKUSD]: {
+    [ZkusdEngineTransactionType.MINT_ZKUSD]: {
       heading: "Borrow ƶkUSD against your deposited MINA",
       buttonText: "Borrow",
       placeholder: "Amount in ƶkUSD",
       handler: mintZkUsd,
     },
-    [VaultTransactionType.BURN_ZKUSD]: {
+    [ZkusdEngineTransactionType.BURN_ZKUSD]: {
       heading: "Repay your borrowed ƶkUSD",
       buttonText: "Repay",
       placeholder: "Amount in ƶkUSD",
       handler: burnZkUsd,
     },
-    [VaultTransactionType.REDEEM_COLLATERAL]: {
+    [ZkusdEngineTransactionType.REDEEM_COLLATERAL]: {
       heading: "Withdraw MINA from your vault",
       buttonText: "Withdraw",
       placeholder: "Amount in MINA",
@@ -256,19 +264,25 @@ const VaultActions = () => {
 
         <TabsContent value="deposit">
           <ActionCard
-            action={VaultTransactionType.DEPOSIT_COLLATERAL}
+            action={ZkusdEngineTransactionType.DEPOSIT_COLLATERAL}
             type="mina"
           />
         </TabsContent>
         <TabsContent value="borrow">
-          <ActionCard action={VaultTransactionType.MINT_ZKUSD} type="zkusd" />
+          <ActionCard
+            action={ZkusdEngineTransactionType.MINT_ZKUSD}
+            type="zkusd"
+          />
         </TabsContent>
         <TabsContent value="repay">
-          <ActionCard action={VaultTransactionType.BURN_ZKUSD} type="zkusd" />
+          <ActionCard
+            action={ZkusdEngineTransactionType.BURN_ZKUSD}
+            type="zkusd"
+          />
         </TabsContent>
         <TabsContent value="withdraw">
           <ActionCard
-            action={VaultTransactionType.REDEEM_COLLATERAL}
+            action={ZkusdEngineTransactionType.REDEEM_COLLATERAL}
             type="mina"
           />
         </TabsContent>

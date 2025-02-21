@@ -1,14 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { NatsConnection, wsconnect } from "@nats-io/nats-core";
-import { TxLifecycleStatus, VaultTransactionType } from "zkusd";
+import { TxLifecycleStatus, ZkusdEngineTransactionType } from "@zkusd/core";
 
 interface TransactionStatusContextValue {
   txStatus: TxLifecycleStatus | undefined;
   setTxStatus: (txStatus: TxLifecycleStatus | undefined) => void;
-  txType: VaultTransactionType | undefined;
-  setTxType: (txType: VaultTransactionType | undefined) => void;
+  txType: ZkusdEngineTransactionType | undefined;
+  setTxType: (txType: ZkusdEngineTransactionType | undefined) => void;
   txError: string | undefined;
   setTxError: (txError: string | undefined) => void;
   title: string;
@@ -16,27 +15,33 @@ interface TransactionStatusContextValue {
 }
 
 const txTypeMap: Record<
-  VaultTransactionType,
+  Exclude<
+    ZkusdEngineTransactionType,
+    | ZkusdEngineTransactionType.UPDATE_ADMIN
+    | ZkusdEngineTransactionType.UPDATE_VALID_PRICE_BLOCK_COUNT
+    | ZkusdEngineTransactionType.UPDATE_ORACLE_WHITELIST
+    | ZkusdEngineTransactionType.TOGGLE_EMERGENCY_STOP
+  >,
   {
     title: string;
   }
 > = {
-  [VaultTransactionType.CREATE_VAULT]: {
+  [ZkusdEngineTransactionType.CREATE_VAULT]: {
     title: "Creating new vault",
   },
-  [VaultTransactionType.DEPOSIT_COLLATERAL]: {
+  [ZkusdEngineTransactionType.DEPOSIT_COLLATERAL]: {
     title: "Depositing collateral",
   },
-  [VaultTransactionType.REDEEM_COLLATERAL]: {
+  [ZkusdEngineTransactionType.REDEEM_COLLATERAL]: {
     title: "Withdrawing collateral",
   },
-  [VaultTransactionType.MINT_ZKUSD]: {
+  [ZkusdEngineTransactionType.MINT_ZKUSD]: {
     title: "Minting zkUSD",
   },
-  [VaultTransactionType.BURN_ZKUSD]: {
+  [ZkusdEngineTransactionType.BURN_ZKUSD]: {
     title: "Repaying zkUSD",
   },
-  [VaultTransactionType.LIQUIDATE]: {
+  [ZkusdEngineTransactionType.LIQUIDATE]: {
     title: "Liquidating vault",
   },
 };
@@ -52,15 +57,15 @@ export function TransactionStatusProvider({
   const [txStatus, setTxStatus] = useState<TxLifecycleStatus | undefined>(
     undefined
   );
-  const [txType, setTxType] = useState<VaultTransactionType | undefined>(
+  const [txType, setTxType] = useState<ZkusdEngineTransactionType | undefined>(
     undefined
   );
   const [txError, setTxError] = useState<string | undefined>(undefined);
   const [title, setTitle] = useState<string>("");
 
   useEffect(() => {
-    if (!!txType) {
-      setTitle(txTypeMap[txType].title);
+    if (!!txType && txType in txTypeMap) {
+      setTitle(txTypeMap[txType as keyof typeof txTypeMap].title);
     }
   }, [txType]);
 

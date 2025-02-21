@@ -12,7 +12,7 @@ import FadeLoader from "react-spinners/FadeLoader";
 import { ErrorMessage, TransactionProgress } from "@/lib/components";
 import { CircleCheck } from "lucide-react";
 import { CircleX } from "lucide-react";
-import { TxLifecycleStatus } from "zkusd";
+import { TxLifecycleStatus } from "@zkusd/core";
 
 const TransactionStatus = () => {
   const { txStatus, title, resetTxStatus, txError } = useTransactionStatus();

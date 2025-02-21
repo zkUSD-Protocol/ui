@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { blockchain, ZKUSDClient } from "zkusd";
+import { blockchain, ZKUSDClient } from "@zkusd/core";
 /**
  * Define the shape of what's in your contracts context.
  * If you have multiple contract instances, include them here.
@@ -24,6 +24,7 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initializeNetwork = async () => {
+      console.log("Initializing network, chain", process.env.NEXT_PUBLIC_CHAIN);
       const client = await ZKUSDClient.create({
         chain: process.env.NEXT_PUBLIC_CHAIN! as blockchain,
         httpProver: process.env.NEXT_PUBLIC_PROVER_URL!,

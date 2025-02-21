@@ -7,25 +7,31 @@ import {
   useState,
   useEffect,
 } from "react";
-import { fetchLastBlock, Mina, PrivateKey, PublicKey, UInt64 } from "o1js";
-import { CloudWorkerResponse } from "@/lib/types/cloud-worker";
+import {
+  fetchLastBlock,
+  Field,
+  Mina,
+  PrivateKey,
+  PublicKey,
+  TokenId,
+  UInt64,
+} from "o1js";
 import { useAccount } from "./account";
-import { prepareTransaction, signAndProve } from "@/lib/utils/transaction";
 import { useClient } from "./client";
 import { useLatestProof } from "../hooks/use-latest-proof";
 import {
   MinaPriceInput,
   oracleAggregationVk,
-  VaultTransactionType,
+  ZkusdEngineTransactionType,
   fetchMinaAccount,
   TxLifecycleStatus,
   TransactionHandle,
-} from "zkusd";
+  getContractKeys,
+} from "@zkusd/core";
 import { VaultState } from "../types";
 import { useTransactionStatus } from "./transaction-status";
 import { calculateHealthFactor, calculateLTV } from "../utils/loan";
 import { usePrice } from "./price";
-import { Vault } from "zkusd";
 
 /**
  * This context provides only the contract calls for creating and interacting with vaults,
@@ -164,11 +170,13 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
   const executeVaultAction = useCallback(
     async (
-      type: VaultTransactionType,
+      type: ZkusdEngineTransactionType,
       action: () => Promise<TransactionHandle> | undefined
     ) => {
       try {
         setTxType(type);
+        setTxStatus(TxLifecycleStatus.PREPARING);
+
         const txHandle = await action();
 
         if (!txHandle) {
@@ -177,7 +185,6 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
         txHandle.subscribeToLifecycleChange(
           async (status: TxLifecycleStatus) => {
-            console.log(status);
             setTxStatus(status);
 
             if (status === TxLifecycleStatus.FAILED) {
@@ -214,8 +221,19 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const depositCollateral = useCallback(
     async (amount: UInt64) => {
       if (!vault?.vaultAddress || !account) return;
+
+      //Lets fetch the account
+      const checkAccount = await fetchMinaAccount({
+        publicKey: PublicKey.fromBase58(
+          "B62qn6kzsMDdjEncK9vvZAaZo5vW5saMmLFyxUn9n5JY5B5gSqKLtm1"
+        ),
+        tokenId: zkusd?.getTokenId("engine"),
+      });
+
+      console.log("Checking Account", checkAccount);
+
       try {
-        executeVaultAction(VaultTransactionType.DEPOSIT_COLLATERAL, () =>
+        executeVaultAction(ZkusdEngineTransactionType.DEPOSIT_COLLATERAL, () =>
           zkusd?.depositCollateral(account, vault.vaultAddress, amount)
         );
       } catch (error) {
@@ -232,11 +250,11 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     async (amount: UInt64) => {
       if (!vault?.vaultAddress || !account) return;
       try {
-        setTxType(VaultTransactionType.MINT_ZKUSD);
+        setTxType(ZkusdEngineTransactionType.MINT_ZKUSD);
 
         const minaPriceInput = await getMinaPriceInput();
 
-        executeVaultAction(VaultTransactionType.MINT_ZKUSD, () =>
+        executeVaultAction(ZkusdEngineTransactionType.MINT_ZKUSD, () =>
           zkusd?.mintZkUsd(account, vault.vaultAddress, amount, minaPriceInput)
         );
       } catch (error) {
@@ -253,7 +271,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const minaPriceInput = await getMinaPriceInput();
 
-        executeVaultAction(VaultTransactionType.REDEEM_COLLATERAL, () =>
+        executeVaultAction(ZkusdEngineTransactionType.REDEEM_COLLATERAL, () =>
           zkusd?.redeemCollateral(
             account,
             vault.vaultAddress,
@@ -273,7 +291,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     async (amount: UInt64) => {
       if (!vault?.vaultAddress || !account) return;
       try {
-        executeVaultAction(VaultTransactionType.BURN_ZKUSD, () =>
+        executeVaultAction(ZkusdEngineTransactionType.BURN_ZKUSD, () =>
           zkusd?.burnZkUsd(account, vault.vaultAddress, amount)
         );
       } catch (error) {

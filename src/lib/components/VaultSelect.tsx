@@ -59,7 +59,7 @@ const VaultSelect = () => {
               />
             </DropdownMenuItem>
           </DropdownMenuGroup>
-          {vaultAddresses.length > 0 && (
+          {vaultAddresses && vaultAddresses.length > 0 && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>

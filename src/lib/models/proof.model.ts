@@ -1,5 +1,5 @@
 import { Schema, model, models } from "mongoose";
-import { AggregateOraclePricesProof } from "zkusd";
+import { AggregateOraclePricesProof } from "@zkusd/core";
 
 interface IProof {
   blockHeight: number;

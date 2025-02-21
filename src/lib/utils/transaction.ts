@@ -1,7 +1,9 @@
 import { Mina, PublicKey, UInt64 } from "o1js";
-import { CloudWorkerRequest, CloudWorkerResponse } from "../types/cloud-worker";
-import { VaultTransactionArgs, VaultTransactionType } from "zkusd";
-import { TxLifecycleStatus } from "zkusd";
+import {
+  ZkusdEngineTransactionArgs,
+  ZkusdEngineTransactionType,
+  TxLifecycleStatus,
+} from "@zkusd/core";
 
 const prepareTransaction = async (
   callback: () => Promise<void>,
@@ -72,10 +74,10 @@ const signAndProve = async ({
   setTxStatus,
   setTxError,
 }: {
-  task: VaultTransactionType;
+  task: ZkusdEngineTransactionType;
   tx: Mina.Transaction<false, false>;
-  memo: VaultTransactionType;
-  args: VaultTransactionArgs[VaultTransactionType];
+  memo: string;
+  args: ZkusdEngineTransactionArgs[ZkusdEngineTransactionType];
   setTxStatus: (txStatus: TxLifecycleStatus) => void;
   setTxError: (txError: string | undefined) => void;
 }) => {
