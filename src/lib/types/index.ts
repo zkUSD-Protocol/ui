@@ -1,17 +1,5 @@
-import {
-  CloudWorkerResponse,
-  CloudWorkerRequest,
-  CloudWorkerTask,
-} from "./cloud-worker";
-import { TransactionType } from "./vault";
 import { ZkUsdEngine, ZkUsdEngineInstance } from "./engine";
 import { TransactionResult } from "./transaction";
+import { VaultState } from "./vault";
 
-export type {
-  CloudWorkerResponse,
-  CloudWorkerRequest,
-  TransactionType,
-  ZkUsdEngine,
-  ZkUsdEngineInstance,
-  TransactionResult,
-};
+export type { ZkUsdEngine, ZkUsdEngineInstance, TransactionResult, VaultState };

@@ -1,17 +1,37 @@
 "use client";
 
-import { createContext, useContext, useCallback } from "react";
-import { PublicKey, UInt64, Mina, AccountUpdate, PrivateKey } from "o1js";
-import { useCloudWorker } from "./cloud-worker";
-import { TransactionType } from "@/lib/types/vault";
-import { CloudWorkerResponse, CloudWorkerTask } from "@/lib/types/cloud-worker";
-import { fetchMinaAccount } from "zkcloudworker";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+} from "react";
+import {
+  fetchLastBlock,
+  Field,
+  Mina,
+  PrivateKey,
+  PublicKey,
+  TokenId,
+  UInt64,
+} from "o1js";
 import { useAccount } from "./account";
-import { useTransaction } from "./transaction";
-import { useContracts } from "./contracts";
-import { useVaultManager } from "./vault-manager";
-import { useLatestProof } from "../hooks/useLatestProof";
-import { MinaPriceInput, oracleAggregationVk } from "zkusd";
+import { useClient } from "./client";
+import { useLatestProof } from "../hooks/use-latest-proof";
+import {
+  MinaPriceInput,
+  oracleAggregationVk,
+  ZkusdEngineTransactionType,
+  fetchMinaAccount,
+  TxLifecycleStatus,
+  TransactionHandle,
+  getContractKeys,
+} from "@zkusd/core";
+import { VaultState } from "../types";
+import { useTransactionStatus } from "./transaction-status";
+import { calculateHealthFactor, calculateLTV } from "../utils/loan";
+import { usePrice } from "./price";
 
 /**
  * This context provides only the contract calls for creating and interacting with vaults,
@@ -19,354 +39,281 @@ import { MinaPriceInput, oracleAggregationVk } from "zkusd";
  */
 
 interface VaultContextProps {
-  createVault: (vaultPrivateKey: PrivateKey) => Promise<CloudWorkerResponse>;
-  depositCollateral: (
-    vaultAddress: PublicKey,
-    amount: UInt64
-  ) => Promise<CloudWorkerResponse>;
-  mintZkUsd: (
-    vaultAddress: PublicKey,
-    amount: UInt64
-  ) => Promise<CloudWorkerResponse>;
-  redeemCollateral: (
-    vaultAddress: PublicKey,
-    amount: UInt64
-  ) => Promise<CloudWorkerResponse>;
-  burnZkUsd: (
-    vaultAddress: PublicKey,
-    amount: UInt64
-  ) => Promise<CloudWorkerResponse>;
-  liquidate: (vaultAddress: PublicKey) => Promise<CloudWorkerResponse>;
+  depositCollateral: (amount: UInt64) => Promise<void>;
+  mintZkUsd: (amount: UInt64) => Promise<void>;
+  redeemCollateral: (amount: UInt64) => Promise<void>;
+  burnZkUsd: (amount: UInt64) => Promise<void>;
+  vault: VaultState | null;
+  initVault: (vaultAddress: string) => Promise<VaultState>;
+  refetchVault: () => Promise<void>;
+  projectedState:
+    | {
+        healthFactor: number;
+        ltv: number;
+      }
+    | undefined;
+  setProjectedState: (
+    state: { healthFactor: number; ltv: number } | undefined
+  ) => void;
 }
 
 const VaultContext = createContext<VaultContextProps | null>(null);
 
 export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   // Instances and context hooks
-  const { engine } = useContracts();
-  const { executeTransaction } = useCloudWorker();
-  const { prepareTransaction, serializeTransaction } = useTransaction();
-  const { data: latestProof } = useLatestProof();
-  const { account } = useAccount();
-  /*
-    addVaultAddress (or createAndTrackVault) is from the vault-manager.
-    addVaultAddress: (vaultAddr: string) => void 
-  */
+
+  const { refetch: refetchLatestProof } = useLatestProof();
+  const { zkusd } = useClient();
+  const { account, refetchAccount } = useAccount();
+  const { setTxStatus, setTxError, setTxType, resetTxStatus } =
+    useTransactionStatus();
+  const { minaPrice } = usePrice();
+
+  //General state
+  const [vault, setVault] = useState<VaultState | null>(null);
+
+  const [projectedState, setProjectedState] = useState<
+    | {
+        healthFactor: number;
+        ltv: number;
+      }
+    | undefined
+  >(undefined);
 
   /**
-   * Sign locally with Mina wallet and send to the cloud worker to prove & broadcast.
+   * Consolidated helper that fetches the vault state and updates the local state.
    */
-  const signAndProve = async ({
-    task,
-    tx,
-    memo,
-    args,
-  }: {
-    task: CloudWorkerTask;
-    tx: Mina.Transaction<false, false>;
-    memo: TransactionType;
-    args: any;
-  }) => {
+  const updateVaultState = async (
+    vaultAddress: string
+  ): Promise<VaultState> => {
+    if (!zkusd) {
+      throw new Error("Network is not initialized");
+    }
+
+    const vaultState = await zkusd.getVaultState(vaultAddress);
+    const collateralAmount = vaultState.collateralAmount.toBigInt();
+    const debtAmount = vaultState.debtAmount.toBigInt();
+    const owner = vaultState.owner?.toBase58() ?? "Not Found";
+    const currentLTV = calculateLTV(collateralAmount, debtAmount, minaPrice);
+    const currentHealthFactor = calculateHealthFactor(
+      collateralAmount,
+      debtAmount,
+      minaPrice
+    );
+
+    const newVaultState: VaultState = {
+      vaultAddress,
+      collateralAmount,
+      debtAmount,
+      owner,
+      currentLTV,
+      currentHealthFactor,
+    };
+
+    setVault(newVaultState);
+    return newVaultState;
+  };
+
+  /**
+   * Initializes the vault by fetching and setting its state.
+   */
+  const initVault = async (vaultAddress: string): Promise<VaultState> => {
     try {
-      const serializedTx = serializeTransaction(tx);
-      const signResult = await window.mina?.sendTransaction({
-        onlySign: true,
-        transaction: tx.toJSON(),
-        feePayer: {
-          fee: Number(tx.transaction.feePayer.body.fee),
-          memo,
-        },
-      });
-
-      if (!signResult || "code" in signResult) {
-        throw new Error(signResult?.message || "Signing failed");
-      }
-
-      if (!("signedData" in signResult)) {
-        throw new Error("Expected signed zkApp command");
-      }
-
-      const signedData = signResult.signedData;
-
-      const transaction = JSON.stringify({
-        serializedTx,
-        signedData,
-      });
-
-      const response = await executeTransaction({
-        task: task,
-        transactions: [transaction],
-        args: JSON.stringify(args),
-      });
-
-      if (!response.success) {
-        throw new Error(response.error);
-      }
-
-      return response;
+      return await updateVaultState(vaultAddress);
     } catch (error) {
+      console.error("Error initializing vault:", error);
       throw error;
     }
   };
 
   /**
-   * Create a brand new vault on-chain.
-   * Once created, we store the vault address in the local manager's storage using addVaultAddress.
+   * Refetches the vault state using the current vault address.
    */
-  const createVault = useCallback(
-    async (vaultPrivateKey: PrivateKey) => {
-      const memo = TransactionType.CREATE_VAULT;
-      const vaultAddress = vaultPrivateKey.toPublicKey();
-      let newAccounts = 0;
+  const refetchVault = async () => {
+    if (!vault?.vaultAddress) return;
+    try {
+      await updateVaultState(vault.vaultAddress);
+    } catch (error) {
+      console.error("Error refetching vault:", error);
+      throw error;
+    }
+  };
 
-      // Check to see if the user already has an account
-      await fetchMinaAccount({
-        publicKey: account!,
-        tokenId: engine.deriveTokenId(),
-      });
+  const getMinaPriceInput = async (): Promise<MinaPriceInput> => {
+    const { data: latestProof } = await refetchLatestProof();
 
-      if (!Mina.hasAccount(account!)) {
-        newAccounts = 2;
-      } else {
-        newAccounts = 1;
+    if (!latestProof) {
+      throw new Error("No latest proof found");
+    }
+
+    //Make sure that the proof is for the latest block
+    const currentBlockHeight = (
+      await fetchLastBlock()
+    ).blockchainLength.toBigint();
+    const proofBlockHeight =
+      latestProof.publicOutput.minaPrice.currentBlockHeight.toBigint();
+
+    //the proofBlockHeight needs to be within 2
+
+    if (
+      currentBlockHeight - proofBlockHeight > 2n ||
+      proofBlockHeight > currentBlockHeight
+    ) {
+      throw new Error("Proof is not within acceptable block range");
+    }
+
+    return new MinaPriceInput({
+      proof: latestProof,
+      verificationKey: oracleAggregationVk,
+    });
+  };
+
+  const executeVaultAction = useCallback(
+    async (
+      type: ZkusdEngineTransactionType,
+      action: () => Promise<TransactionHandle> | undefined
+    ) => {
+      try {
+        setTxType(type);
+        setTxStatus(TxLifecycleStatus.PREPARING);
+
+        const txHandle = await action();
+
+        if (!txHandle) {
+          throw new Error("Transaction handle is undefined");
+        }
+
+        txHandle.subscribeToLifecycleChange(
+          async (status: TxLifecycleStatus) => {
+            setTxStatus(status);
+
+            if (status === TxLifecycleStatus.FAILED) {
+              setTxError("Transaction failed. Please try again.");
+            }
+
+            if (status === TxLifecycleStatus.SUCCESS) {
+              console.log("Transaction successful");
+              await refetchVault();
+              await refetchAccount();
+              // resetTxStatus();
+            }
+          }
+        );
+      } catch (error: any) {
+        setTxError(error.message);
+        throw error;
       }
-
-      console.log("newAccounts", newAccounts);
-
-      // Prepare transaction
-      const tx = await prepareTransaction(async () => {
-        // Fund new accounts for deploying the vault
-        AccountUpdate.fundNewAccount(account!, newAccounts);
-        await engine.createVault(vaultAddress);
-      }, memo);
-
-      // Sign the transaction
-      tx.sign([vaultPrivateKey]);
-
-      // Broadcast
-      const response = await signAndProve({
-        task: TransactionType.CREATE_VAULT,
-        tx,
-        memo,
-        args: {
-          vaultAddress: vaultAddress.toBase58(),
-          newAccounts,
-        },
-      });
-
-      return response;
     },
-    [engine, prepareTransaction, signAndProve, account]
+    [
+      setTxStatus,
+      setTxType,
+      setTxError,
+      resetTxStatus,
+      refetchVault,
+      refetchAccount,
+      zkusd,
+    ]
   );
 
   /**
    * Deposit Collateral
    */
   const depositCollateral = useCallback(
-    async (vaultAddress: PublicKey, amount: UInt64) => {
+    async (amount: UInt64) => {
+      if (!vault?.vaultAddress || !account) return;
+
+      //Lets fetch the account
+      const checkAccount = await fetchMinaAccount({
+        publicKey: PublicKey.fromBase58(
+          "B62qn6kzsMDdjEncK9vvZAaZo5vW5saMmLFyxUn9n5JY5B5gSqKLtm1"
+        ),
+        tokenId: zkusd?.getTokenId("engine"),
+      });
+
+      console.log("Checking Account", checkAccount);
+
       try {
-        // Prepare the transaction via engine or building it yourself
-        const memo = TransactionType.DEPOSIT_COLLATERAL;
-
-        const tx = await prepareTransaction(async () => {
-          await engine.depositCollateral(vaultAddress, amount);
-        }, memo);
-
-        // We do not sign here manually because depositCollateral
-        // might have a .sign() step inside or require the user to sign the fee.
-        // So let's replicate the signAndProve pattern:
-        // if you prefer a "prepareTransaction" approach, you can do that as well.
-        const response = await signAndProve({
-          task: TransactionType.DEPOSIT_COLLATERAL,
-          tx: tx as any,
-          memo,
-          args: {
-            vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
-          },
-        });
-
-        // On success, we can optionally invalidate the query in vault-manager
-        // (the vault manager or the component can do something like
-        // queryClient.invalidateQueries(["vaultState", vaultAddress.toBase58()]) )
-
-        return response;
+        executeVaultAction(ZkusdEngineTransactionType.DEPOSIT_COLLATERAL, () =>
+          zkusd?.depositCollateral(account, vault.vaultAddress, amount)
+        );
       } catch (error) {
         throw error;
       }
     },
-    [engine, signAndProve]
+    [vault, account]
   );
 
   /**
    * Mint zkUSD
    */
   const mintZkUsd = useCallback(
-    async (vaultAddress: PublicKey, amount: UInt64) => {
+    async (amount: UInt64) => {
+      if (!vault?.vaultAddress || !account) return;
       try {
-        const memo = TransactionType.MINT_ZKUSD;
+        setTxType(ZkusdEngineTransactionType.MINT_ZKUSD);
 
-        await fetchMinaAccount({
-          publicKey: engine.address,
-        });
+        const minaPriceInput = await getMinaPriceInput();
 
-        const minaPriceInput = new MinaPriceInput({
-          proof: latestProof!,
-          verificationKey: oracleAggregationVk,
-        });
-
-        console.time("preparing transaction with proof");
-        const tx = await prepareTransaction(async () => {
-          await engine.mintZkUsd(vaultAddress, amount, minaPriceInput);
-        }, memo);
-        console.timeEnd("preparing transaction with proof");
-
-        const response = await signAndProve({
-          task: TransactionType.MINT_ZKUSD,
-          tx: tx as any,
-          memo,
-          args: {
-            vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
-            minaPriceProof: latestProof?.toJSON() || {},
-          },
-        });
-
-        // Same note as depositCollateral about invalidating queries
-
-        return response;
+        executeVaultAction(ZkusdEngineTransactionType.MINT_ZKUSD, () =>
+          zkusd?.mintZkUsd(account, vault.vaultAddress, amount, minaPriceInput)
+        );
       } catch (error) {
         console.error("Error minting zkUSD", error);
         throw error;
       }
     },
-    [engine, signAndProve]
+    [vault, account]
   );
 
   const redeemCollateral = useCallback(
-    async (vaultAddress: PublicKey, amount: UInt64) => {
+    async (amount: UInt64) => {
+      if (!vault?.vaultAddress || !account) return;
       try {
-        const memo = TransactionType.REDEEM_COLLATERAL;
+        const minaPriceInput = await getMinaPriceInput();
 
-        await fetchMinaAccount({
-          publicKey: engine.address,
-        });
-
-        const minaPriceInput = new MinaPriceInput({
-          proof: latestProof!,
-          verificationKey: oracleAggregationVk,
-        });
-
-        console.time("preparing redeem collateral transaction with proof");
-        const tx = await prepareTransaction(async () => {
-          await engine.redeemCollateral(vaultAddress, amount, minaPriceInput);
-        }, memo);
-        console.timeEnd("preparing redeem collateral transaction with proof");
-
-        const response = await signAndProve({
-          task: TransactionType.REDEEM_COLLATERAL,
-          tx: tx as any,
-          memo,
-          args: {
-            vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
-            minaPriceProof: latestProof?.toJSON() || {},
-          },
-        });
-
-        return response;
+        executeVaultAction(ZkusdEngineTransactionType.REDEEM_COLLATERAL, () =>
+          zkusd?.redeemCollateral(
+            account,
+            vault.vaultAddress,
+            amount,
+            minaPriceInput
+          )
+        );
       } catch (error) {
         console.error("Error redeeming collateral", error);
         throw error;
       }
     },
-    [engine, signAndProve, latestProof]
+    [vault, account]
   );
 
   const burnZkUsd = useCallback(
-    async (vaultAddress: PublicKey, amount: UInt64) => {
+    async (amount: UInt64) => {
+      if (!vault?.vaultAddress || !account) return;
       try {
-        const memo = TransactionType.BURN_ZKUSD;
-
-        // Fetch the engine account state
-        await fetchMinaAccount({
-          publicKey: engine.address,
-        });
-
-        console.time("preparing burn zkUSD transaction");
-        const tx = await prepareTransaction(async () => {
-          await engine.burnZkUsd(vaultAddress, amount);
-        }, memo);
-        console.timeEnd("preparing burn zkUSD transaction");
-
-        const response = await signAndProve({
-          task: TransactionType.BURN_ZKUSD,
-          tx: tx as any,
-          memo,
-          args: {
-            vaultAddress: vaultAddress.toBase58(),
-            amount: amount.toString(),
-          },
-        });
-
-        return response;
+        executeVaultAction(ZkusdEngineTransactionType.BURN_ZKUSD, () =>
+          zkusd?.burnZkUsd(account, vault.vaultAddress, amount)
+        );
       } catch (error) {
         console.error("Error burning zkUSD", error);
         throw error;
       }
     },
-    [engine, prepareTransaction, signAndProve]
-  );
-
-  const liquidate = useCallback(
-    async (vaultAddress: PublicKey) => {
-      try {
-        const memo = TransactionType.LIQUIDATE;
-
-        // Fetch the engine account state
-        await fetchMinaAccount({
-          publicKey: engine.address,
-        });
-
-        const minaPriceInput = new MinaPriceInput({
-          proof: latestProof!,
-          verificationKey: oracleAggregationVk,
-        });
-
-        console.time("preparing liquidate transaction with proof");
-        const tx = await prepareTransaction(async () => {
-          await engine.liquidate(vaultAddress, minaPriceInput);
-        }, memo);
-        console.timeEnd("preparing liquidate transaction with proof");
-
-        const response = await signAndProve({
-          task: TransactionType.LIQUIDATE,
-          tx: tx as any,
-          memo,
-          args: {
-            vaultAddress: vaultAddress.toBase58(),
-            minaPriceProof: latestProof?.toJSON() || {},
-          },
-        });
-
-        return response;
-      } catch (error) {
-        console.error("Error liquidating vault", error);
-        throw error;
-      }
-    },
-    [engine, prepareTransaction, signAndProve, latestProof]
+    [vault, account]
   );
 
   return (
     <VaultContext.Provider
       value={{
-        createVault,
         depositCollateral,
         mintZkUsd,
         redeemCollateral,
         burnZkUsd,
-        liquidate,
+        vault,
+        initVault,
+        refetchVault,
+        projectedState,
+        setProjectedState,
       }}
     >
       {children}

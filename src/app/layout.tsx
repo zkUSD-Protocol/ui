@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { Providers } from "@/lib/context";
-import "./globals.css";
 
 export const metadata: Metadata = {
   title: "zkUSD",
