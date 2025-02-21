@@ -5,13 +5,14 @@ import { useVault } from "@/lib/context/vault";
 import { useEffect, useState } from "react";
 import { VaultOverview } from "@/lib/components/";
 import { useAccount } from "@/lib/context/account";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useClient } from "@/lib/context/client";
 import { usePrice } from "@/lib/context/price";
 import { useVaultManager } from "@/lib/context/vault-manager";
 import { formatMinaAmount } from "@/lib/utils/formatting";
 
-export default function VaultPage({ params }: { params: { address: string } }) {
+export default function VaultPage() {
+  const { address }: { address: string } = useParams();
   const { initVault, vault } = useVault();
   const { isConnected, account } = useAccount();
   const { zkusd } = useClient();
@@ -23,11 +24,11 @@ export default function VaultPage({ params }: { params: { address: string } }) {
     const loadVault = async () => {
       if (!zkusd || !account) return;
 
-      await initVault(params.address);
+      await initVault(address);
     };
 
     loadVault();
-  }, [params.address, zkusd, account]);
+  }, [address, zkusd, account]);
 
   return (
     <>
