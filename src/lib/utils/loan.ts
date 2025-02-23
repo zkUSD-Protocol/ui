@@ -70,7 +70,7 @@ export function calculateLTV(
 
 export function getHealthFactorRisk(healthFactor: number): string {
   if (healthFactor >= 150) return "HEALTHY";
-  if (healthFactor >= 130) return "WARNING";
+  if (healthFactor >= 130) return "CAUTION";
   if (healthFactor >= 120) return "RISKY";
   if (healthFactor >= 110) return "DANGER";
   return "DANGER";

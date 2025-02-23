@@ -7,7 +7,9 @@
     "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
-    "ts-watch": "tsc --noEmit --incremental --watch"
+    "ts-watch": "tsc --noEmit --incremental --watch",
+    "link-local": "npm link @zkusd/core",
+    "unlink-local": "npm unlink @zkusd/core && npm install"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.4",

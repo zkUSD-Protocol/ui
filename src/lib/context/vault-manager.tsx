@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { PublicKey, PrivateKey, AccountUpdate, Field } from "o1js";
@@ -45,9 +46,11 @@ export function VaultManagerProvider({
 }) {
   const { zkusd } = useClient();
   const { account, accountInitialized } = useAccount();
-  const { setTxStatus, setTxType, setTxError } = useTransactionStatus();
+  const { setTxStatus, setTxType, setTxError, setTxHash, txHash } =
+    useTransactionStatus();
   const [vaultAddresses, setVaultAddresses] = useState<string[] | null>(null);
   const [vaultsLoaded, setVaultsLoaded] = useState(false);
+  const txHashRef = useRef<string | undefined>(txHash);
   const router = useRouter();
   // Load vaults from localStorage when the account changes.
   useEffect(() => {
@@ -112,6 +115,10 @@ export function VaultManagerProvider({
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
   }, [vaultAddresses, account]);
 
+  useEffect(() => {
+    txHashRef.current = txHash;
+  }, [txHash]);
+
   // Generate a new vault address using a random private key.
   const generateVaultAddress = useCallback(() => {
     const vaultPrivateKey = PrivateKey.random();
@@ -147,9 +154,13 @@ export function VaultManagerProvider({
           );
           router.push(`/vault/${vaultAddress}`);
         }
+
+        if (!txHashRef.current && txHandle.hash) {
+          setTxHash(txHandle.hash);
+        }
       });
     },
-    [account, zkusd, setTxStatus, setTxError]
+    [account, zkusd, setTxStatus, setTxError, setTxHash, txHash]
   );
 
   // Remove a vault address from state.
