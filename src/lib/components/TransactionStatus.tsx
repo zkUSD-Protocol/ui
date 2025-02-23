@@ -28,6 +28,7 @@ const TransactionStatus = () => {
       txStatus === TxLifecycleStatus.FAILED
     ) {
       setTimeout(() => {
+        resetTxStatus();
         handleOpenChange(false);
       }, 3000);
     }
