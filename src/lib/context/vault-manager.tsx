@@ -9,7 +9,12 @@ import React, {
 } from "react";
 import { PublicKey, PrivateKey, AccountUpdate, Field } from "o1js";
 import { useClient } from "./client";
-import { TxLifecycleStatus, Vault, fetchMinaAccount } from "@zkusd/core";
+import {
+  TxLifecycleStatus,
+  Vault,
+  ZkusdEngineTransactionType,
+  fetchMinaAccount,
+} from "@zkusd/core";
 import { useAccount } from "./account";
 import { useTransactionStatus } from "./transaction-status";
 import { useRouter } from "next/navigation";
@@ -118,6 +123,8 @@ export function VaultManagerProvider({
   const createNewVault = useCallback(
     async (vaultPrivateKey: PrivateKey) => {
       if (!account || !zkusd) return;
+
+      setTxType(ZkusdEngineTransactionType.CREATE_VAULT);
 
       const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
