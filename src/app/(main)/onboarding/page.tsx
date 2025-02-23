@@ -17,14 +17,17 @@ const OnboardingPage = () => {
           </h1>
           <div className="flex gap-4">
             <Card className="p-8 w-[464px]">
-              <div className="flex flex-col gap-4">
-                <p className="text-white font-sans leading-[24px] tracking-[0.06em]">
-                  Create a new vault
-                </p>
-                <p className="text-muted-foreground text-xs font-sans font-light leading-[18px] tracking-[0.06em]">
-                  Start here if you don't already have own a vault. Once created
-                  you will be able to deposit MINA and borrow zkUSD.
-                </p>
+              <div className="h-full flex flex-col gap-4 justify-between">
+                <div className="flex flex-col gap-4">
+                  <p className="text-white font-sans leading-[24px] tracking-[0.06em]">
+                    Create a new vault
+                  </p>
+                  <p className="text-muted-foreground text-xs font-sans font-light leading-[18px] tracking-[0.06em]">
+                    Start here to create a new vault. If this is your first
+                    vault, first vault, it will cost 2 MINA to create. Otherwise
+                    it will cost 1 MINA.
+                  </p>
+                </div>
                 <Button
                   className="w-fit"
                   onClick={() => setCreateDialogOpen(true)}
@@ -34,14 +37,16 @@ const OnboardingPage = () => {
               </div>
             </Card>
             <Card className="p-8 w-[464px]">
-              <div className="flex flex-col gap-4">
-                <p className="text-white font-sans leading-[24px] tracking-[0.06em]">
-                  Import an existing vault
-                </p>
-                <p className="text-muted-foreground text-xs font-sans font-light leading-[18px] tracking-[0.06em]">
-                  If you already own a vault, you can import it here and begin
-                  managing your positions.
-                </p>
+              <div className="h-full flex flex-col gap-4 justify-between">
+                <div className="flex flex-col gap-4">
+                  <p className="text-white font-sans leading-[24px] tracking-[0.06em]">
+                    Import an existing vault
+                  </p>
+                  <p className="text-muted-foreground text-xs font-sans font-light leading-[18px] tracking-[0.06em]">
+                    If you already own a vault, you can import it here and begin
+                    managing your positions.
+                  </p>
+                </div>
                 <Button
                   className="w-fit"
                   onClick={() => setImportDialogOpen(true)}

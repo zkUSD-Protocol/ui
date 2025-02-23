@@ -48,13 +48,7 @@
   }
 }
 
-@font-face {
-  font-family: "RedditMono";
-  src: url("https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@100..900&display=swap");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
+@import url("https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@100..900&display=swap");
 
 @font-face {
   font-family: "Golden State";

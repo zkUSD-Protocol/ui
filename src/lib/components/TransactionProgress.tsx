@@ -1,11 +1,15 @@
 import { Progress } from "@/lib/components/ui/progress";
 import { TxLifecycleStatus } from "@zkusd/core";
+import Link from "next/link";
+import { useTransactionStatus } from "../context/transaction-status";
 
 interface TransactionProgressProps {
   status: TxLifecycleStatus;
 }
 
 export function TransactionProgress({ status }: TransactionProgressProps) {
+  const { txHash } = useTransactionStatus();
+
   // Map status to step number (1-6)
   const getStepNumber = (status: TxLifecycleStatus): number => {
     switch (status) {
@@ -55,9 +59,27 @@ export function TransactionProgress({ status }: TransactionProgressProps) {
 
   return (
     <div className="w-full space-y-2">
-      <p className="text-xs leading-[18px] tracking-[0.06em] font-sans font-light text-muted-foreground">
-        {getStatusMessage(status)}
-      </p>
+      <div className="flex gap-2 h-5 items-center tracking-[0.06em]">
+        <p className="text-xs font-sans font-light text-muted-foreground">
+          {getStatusMessage(status)}
+        </p>
+
+        {txHash && (
+          <Link
+            className="mb-[2px]"
+            target="_blank"
+            href={`${process.env.NEXT_PUBLIC_EXPLORER_TRANSACTION_URL}${txHash}`}
+          >
+            {" "}
+            <span className="text-xs leading-[18px] tracking-[0.06em] font-sans font-light text-muted-foreground">
+              -
+            </span>{" "}
+            <span className="text-xs  font-sans font-light text-white underline cursor-pointer">
+              View on explorer
+            </span>
+          </Link>
+        )}
+      </div>
 
       <Progress value={progress} className="w-full h-[1px]" />
     </div>

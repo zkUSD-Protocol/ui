@@ -17,10 +17,6 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (latestProof?.publicOutput.minaPrice.priceNanoUSD) {
-      console.log(
-        "Setting mina price",
-        latestProof.publicOutput.minaPrice.priceNanoUSD
-      );
       setMinaPrice(
         BigInt(latestProof.publicOutput.minaPrice.priceNanoUSD.toString())
       );

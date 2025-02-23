@@ -10,6 +10,8 @@ interface TransactionStatusContextValue {
   setTxType: (txType: ZkusdEngineTransactionType | undefined) => void;
   txError: string | undefined;
   setTxError: (txError: string | undefined) => void;
+  txHash: string | undefined;
+  setTxHash: (txHash: string | undefined) => void;
   title: string;
   resetTxStatus: () => Promise<void>;
 }
@@ -62,6 +64,7 @@ export function TransactionStatusProvider({
   );
   const [txError, setTxError] = useState<string | undefined>(undefined);
   const [title, setTitle] = useState<string>("");
+  const [txHash, setTxHash] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!!txType && txType in txTypeMap) {
@@ -70,10 +73,12 @@ export function TransactionStatusProvider({
   }, [txType]);
 
   const resetTxStatus = async () => {
+    console.log("resetTxStatus");
     setTxStatus(undefined);
     setTxType(undefined);
     setTitle("");
     setTxError(undefined);
+    setTxHash(undefined);
   };
 
   return (
@@ -86,6 +91,8 @@ export function TransactionStatusProvider({
         setTxType,
         txError,
         setTxError,
+        txHash,
+        setTxHash,
         resetTxStatus,
       }}
     >

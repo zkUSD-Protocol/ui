@@ -33,6 +33,7 @@ export function useAccountState(accountAddress: string, tokenId: string) {
     },
     // Add caching configuration as needed
     staleTime: 3000,
+    refetchInterval: 3000,
     enabled: !!accountAddress,
   });
 }

@@ -6,6 +6,7 @@ import {
   useCallback,
   useState,
   useEffect,
+  useRef,
 } from "react";
 import {
   fetchLastBlock,
@@ -65,9 +66,17 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const { refetch: refetchLatestProof } = useLatestProof();
   const { zkusd } = useClient();
   const { account, refetchAccount } = useAccount();
-  const { setTxStatus, setTxError, setTxType, resetTxStatus } =
-    useTransactionStatus();
+  const {
+    setTxStatus,
+    setTxError,
+    setTxType,
+    resetTxStatus,
+    setTxHash,
+    txHash,
+  } = useTransactionStatus();
   const { minaPrice } = usePrice();
+
+  const txHashRef = useRef<string | undefined>(txHash);
 
   //General state
   const [vault, setVault] = useState<VaultState | null>(null);
@@ -168,6 +177,10 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  useEffect(() => {
+    txHashRef.current = txHash;
+  }, [txHash]);
+
   const executeVaultAction = useCallback(
     async (
       type: ZkusdEngineTransactionType,
@@ -195,7 +208,10 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
               console.log("Transaction successful");
               await refetchVault();
               await refetchAccount();
-              // resetTxStatus();
+            }
+
+            if (!txHashRef.current && txHandle.hash) {
+              setTxHash(txHandle.hash);
             }
           }
         );
@@ -205,6 +221,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       }
     },
     [
+      txHash,
       setTxStatus,
       setTxType,
       setTxError,
@@ -212,6 +229,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       refetchVault,
       refetchAccount,
       zkusd,
+      setTxHash,
     ]
   );
 
@@ -221,16 +239,6 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const depositCollateral = useCallback(
     async (amount: UInt64) => {
       if (!vault?.vaultAddress || !account) return;
-
-      //Lets fetch the account
-      const checkAccount = await fetchMinaAccount({
-        publicKey: PublicKey.fromBase58(
-          "B62qn6kzsMDdjEncK9vvZAaZo5vW5saMmLFyxUn9n5JY5B5gSqKLtm1"
-        ),
-        tokenId: zkusd?.getTokenId("engine"),
-      });
-
-      console.log("Checking Account", checkAccount);
 
       try {
         executeVaultAction(ZkusdEngineTransactionType.DEPOSIT_COLLATERAL, () =>

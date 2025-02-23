@@ -51,7 +51,6 @@ export default function AppInitializer({ children }: AppInitializerProps) {
       pathname.startsWith("/vault/") &&
       vaultAddresses?.includes(pathname.split("/")[2])
     ) {
-      console.log("Valid vault path detected");
       return;
     }
 
