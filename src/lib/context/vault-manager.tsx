@@ -11,6 +11,9 @@ import React, {
 import { PublicKey, PrivateKey, AccountUpdate, Field } from "o1js";
 import { useClient } from "./client";
 import {
+  TransactionPhase,
+  TransactionPhaseStatus,
+  TransactionStatusNew,
   TxLifecycleStatus,
   Vault,
   ZkusdEngineTransactionType,
@@ -45,9 +48,16 @@ export function VaultManagerProvider({
   children: React.ReactNode;
 }) {
   const { zkusd } = useClient();
-  const { account, accountInitialized } = useAccount();
-  const { setTxStatus, setTxType, setTxError, setTxHash, txHash } =
-    useTransactionStatus();
+  const { account, accountInitialized, refetchAccount } = useAccount();
+  const {
+    setTxPhase,
+    txPhase,
+    setTxType,
+    setTxError,
+    setTxHash,
+    txHash,
+    txError,
+  } = useTransactionStatus();
   const [vaultAddresses, setVaultAddresses] = useState<string[] | null>(null);
   const [vaultsLoaded, setVaultsLoaded] = useState(false);
   const txHashRef = useRef<string | undefined>(txHash);
@@ -135,32 +145,42 @@ export function VaultManagerProvider({
 
       const vaultAddress = vaultPrivateKey.toPublicKey().toBase58();
 
-      setTxStatus(TxLifecycleStatus.PREPARING);
+      setTxPhase(TransactionPhase.BUILDING);
 
       const txHandle = await zkusd?.createVault(account, vaultPrivateKey, {
         extraSigners: [vaultPrivateKey],
-        printTx: true,
       });
 
-      txHandle?.subscribeToLifecycleChange((status: TxLifecycleStatus) => {
-        setTxStatus(status);
-        if (status === TxLifecycleStatus.FAILED) {
-          setTxError("Something went wrong, please try again!");
-        }
+      txHandle?.subscribeToLifecycle(
+        async (lifecycle: TransactionStatusNew) => {
+          let phase: TransactionPhase = lifecycle.phase;
+          let status: TransactionPhaseStatus = lifecycle.status;
+          if (txPhase !== phase) {
+            setTxPhase(phase);
+          }
 
-        if (status === TxLifecycleStatus.SUCCESS) {
-          setVaultAddresses((prev) =>
-            Array.from(new Set([...(prev || []), vaultAddress]))
-          );
-          router.push(`/vault/${vaultAddress}`);
-        }
+          if ((status === "FAILED" || status === "EXCEPTION") && !txError) {
+            setTxError(
+              `Error during ${phase} phase, please check the console for more details!`
+            );
+            console.error(lifecycle);
+          }
 
-        if (!txHashRef.current && txHandle.hash) {
-          setTxHash(txHandle.hash);
+          if (txHandle.hash && !txHashRef.current) {
+            setTxHash(txHandle.hash);
+          }
+
+          if (phase === TransactionPhase.INCLUDED) {
+            setVaultAddresses((prev) =>
+              Array.from(new Set([...(prev || []), vaultAddress]))
+            );
+            router.push(`/vault/${vaultAddress}`);
+            await refetchAccount();
+          }
         }
-      });
+      );
     },
-    [account, zkusd, setTxStatus, setTxError, setTxHash, txHash]
+    [account, zkusd, setTxPhase, setTxError, setTxHash, txHash]
   );
 
   // Remove a vault address from state.

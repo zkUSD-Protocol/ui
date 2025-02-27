@@ -118,6 +118,12 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
         break;
     }
 
+    projectedDebtAmount = BigInt(Math.max(Number(projectedDebtAmount), 0));
+
+    // if (projectedDebtAmount > 0n && projectedCollateralAmount === 0n) {
+    //   projectedCollateralAmount = -1n;
+    // }
+
     const projectedLTV = calculateLTV(
       projectedCollateralAmount,
       projectedDebtAmount,
@@ -135,7 +141,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
       ltv: projectedLTV,
     });
 
-    if (projectedHealthFactor > 0 && projectedHealthFactor < 100) {
+    if (projectedHealthFactor !== -1 && projectedHealthFactor < 100) {
       setErrMsg("Health score would be too low to perform this action");
     }
   }, [amount]);
@@ -155,6 +161,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
     | ZkusdEngineTransactionType.UPDATE_VALID_PRICE_BLOCK_COUNT
     | ZkusdEngineTransactionType.UPDATE_ORACLE_WHITELIST
     | ZkusdEngineTransactionType.TOGGLE_EMERGENCY_STOP
+    | ZkusdEngineTransactionType.TRANSFER
   >;
 
   const actionConfig: VaultActionTypes = {

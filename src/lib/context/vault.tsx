@@ -28,11 +28,15 @@ import {
   TxLifecycleStatus,
   TransactionHandle,
   getContractKeys,
+  TransactionStatusNew,
+  TransactionPhase,
+  TransactionPhaseStatus,
 } from "@zkusd/core";
 import { VaultState } from "../types";
 import { useTransactionStatus } from "./transaction-status";
 import { calculateHealthFactor, calculateLTV } from "../utils/loan";
 import { usePrice } from "./price";
+import router from "next/router";
 
 /**
  * This context provides only the contract calls for creating and interacting with vaults,
@@ -67,11 +71,13 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const { zkusd } = useClient();
   const { account, refetchAccount } = useAccount();
   const {
-    setTxStatus,
+    setTxPhase,
     setTxError,
     setTxType,
     resetTxStatus,
     setTxHash,
+    txPhase,
+    txError,
     txHash,
   } = useTransactionStatus();
   const { minaPrice } = usePrice();
@@ -188,7 +194,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     ) => {
       try {
         setTxType(type);
-        setTxStatus(TxLifecycleStatus.PREPARING);
+        setTxPhase(TransactionPhase.BUILDING);
 
         const txHandle = await action();
 
@@ -196,22 +202,28 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
           throw new Error("Transaction handle is undefined");
         }
 
-        txHandle.subscribeToLifecycleChange(
-          async (status: TxLifecycleStatus) => {
-            setTxStatus(status);
-
-            if (status === TxLifecycleStatus.FAILED) {
-              setTxError("Transaction failed. Please try again.");
+        txHandle?.subscribeToLifecycle(
+          async (lifecycle: TransactionStatusNew) => {
+            let phase: TransactionPhase = lifecycle.phase;
+            let status: TransactionPhaseStatus = lifecycle.status;
+            if (txPhase !== phase) {
+              setTxPhase(phase);
             }
 
-            if (status === TxLifecycleStatus.SUCCESS) {
-              console.log("Transaction successful");
+            if ((status === "FAILED" || status === "EXCEPTION") && !txError) {
+              setTxError(
+                `Error during ${phase} phase, please check the console for more details!`
+              );
+              console.error(lifecycle);
+            }
+
+            if (txHandle.hash && !txHashRef.current) {
+              setTxHash(txHandle.hash);
+            }
+
+            if (phase === TransactionPhase.INCLUDED) {
               await refetchVault();
               await refetchAccount();
-            }
-
-            if (!txHashRef.current && txHandle.hash) {
-              setTxHash(txHandle.hash);
             }
           }
         );
@@ -222,10 +234,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     },
     [
       txHash,
-      setTxStatus,
+      setTxPhase,
       setTxType,
       setTxError,
-      resetTxStatus,
       refetchVault,
       refetchAccount,
       zkusd,

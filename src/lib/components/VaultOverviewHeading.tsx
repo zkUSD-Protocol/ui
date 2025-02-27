@@ -25,7 +25,7 @@ const VaultOverviewHeading = ({
             <h1 className="font-serif font-thin italic text-3xl leading-[32px] tracking-tighter text-white">
               Your vault
             </h1>
-            <p className="font-mono text-xs leading-[18px] tracking-[0.02em] text-white">
+            <p className="hidden sm:block font-mono text-xs leading-[18px] tracking-[0.02em] text-white">
               {formatDisplayAccount(vault?.vaultAddress, 6)}
             </p>
           </div>

@@ -12,27 +12,24 @@ import FadeLoader from "react-spinners/FadeLoader";
 import { ErrorMessage, TransactionProgress } from "@/lib/components";
 import { CircleCheck } from "lucide-react";
 import { CircleX } from "lucide-react";
-import { TxLifecycleStatus } from "@zkusd/core";
+import { TransactionPhase } from "@zkusd/core";
 
 const TransactionStatus = () => {
-  const { txStatus, title, resetTxStatus, txError } = useTransactionStatus();
+  const { txPhase, title, resetTxStatus, txError } = useTransactionStatus();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!!txStatus && !open) {
+    if (!!txPhase && !open) {
       setOpen(true);
     }
 
-    if (
-      txStatus === TxLifecycleStatus.SUCCESS ||
-      txStatus === TxLifecycleStatus.FAILED
-    ) {
+    if (txPhase === TransactionPhase.INCLUDED || txError) {
       setTimeout(() => {
         resetTxStatus();
         handleOpenChange(false);
       }, 3000);
     }
-  }, [txStatus]);
+  }, [txPhase, txError]);
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
@@ -52,7 +49,7 @@ const TransactionStatus = () => {
           <DialogTitle className="">{title}</DialogTitle>
         </DialogHeader>
         <div className="flex items-center h-20 gap-6 justify-center">
-          {txStatus === TxLifecycleStatus.SUCCESS ? (
+          {txPhase === TransactionPhase.INCLUDED ? (
             <div className="w-20 h-20 flex items-center justify-center">
               <CircleCheck
                 className="text-primary"
@@ -60,7 +57,7 @@ const TransactionStatus = () => {
                 strokeWidth={0.5}
               />
             </div>
-          ) : txStatus === TxLifecycleStatus.FAILED ? (
+          ) : txError ? (
             <div className="w-20 h-20 flex items-center justify-center">
               <CircleX className="text-danger" size={70} strokeWidth={0.5} />
             </div>
@@ -88,7 +85,7 @@ const TransactionStatus = () => {
           <ErrorMessage error={txError} />
         ) : (
           <DialogFooter className="w-full">
-            {txStatus && <TransactionProgress status={txStatus} />}
+            {txPhase && <TransactionProgress phase={txPhase} />}
           </DialogFooter>
         )}
       </DialogContent>

@@ -1,11 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { TxLifecycleStatus, ZkusdEngineTransactionType } from "@zkusd/core";
+import { TransactionPhase, ZkusdEngineTransactionType } from "@zkusd/core";
 
 interface TransactionStatusContextValue {
-  txStatus: TxLifecycleStatus | undefined;
-  setTxStatus: (txStatus: TxLifecycleStatus | undefined) => void;
+  txPhase: TransactionPhase | undefined;
+  setTxPhase: (txPhase: TransactionPhase | undefined) => void;
   txType: ZkusdEngineTransactionType | undefined;
   setTxType: (txType: ZkusdEngineTransactionType | undefined) => void;
   txError: string | undefined;
@@ -23,6 +23,8 @@ const txTypeMap: Record<
     | ZkusdEngineTransactionType.UPDATE_VALID_PRICE_BLOCK_COUNT
     | ZkusdEngineTransactionType.UPDATE_ORACLE_WHITELIST
     | ZkusdEngineTransactionType.TOGGLE_EMERGENCY_STOP
+    | ZkusdEngineTransactionType.TRANSFER
+    | ZkusdEngineTransactionType.LIQUIDATE
   >,
   {
     title: string;
@@ -43,9 +45,6 @@ const txTypeMap: Record<
   [ZkusdEngineTransactionType.BURN_ZKUSD]: {
     title: "Repaying zkUSD",
   },
-  [ZkusdEngineTransactionType.LIQUIDATE]: {
-    title: "Liquidating vault",
-  },
 };
 
 const TransactionStatusContext =
@@ -56,7 +55,7 @@ export function TransactionStatusProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [txStatus, setTxStatus] = useState<TxLifecycleStatus | undefined>(
+  const [txPhase, setTxPhase] = useState<TransactionPhase | undefined>(
     undefined
   );
   const [txType, setTxType] = useState<ZkusdEngineTransactionType | undefined>(
@@ -73,8 +72,7 @@ export function TransactionStatusProvider({
   }, [txType]);
 
   const resetTxStatus = async () => {
-    console.log("resetTxStatus");
-    setTxStatus(undefined);
+    setTxPhase(undefined);
     setTxType(undefined);
     setTitle("");
     setTxError(undefined);
@@ -84,8 +82,8 @@ export function TransactionStatusProvider({
   return (
     <TransactionStatusContext.Provider
       value={{
-        txStatus,
-        setTxStatus,
+        txPhase,
+        setTxPhase,
         title,
         txType,
         setTxType,

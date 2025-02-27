@@ -15,8 +15,8 @@ const OnboardingPage = () => {
           <h1 className="text-left font-serif font-thin italic text-3xl leading-[32px] tracking-tighter text-white">
             Create or Import Vault
           </h1>
-          <div className="flex gap-4">
-            <Card className="p-8 w-[464px]">
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <Card className="p-8 max-w-[464px] lg:w-[464px]">
               <div className="h-full flex flex-col gap-4 justify-between">
                 <div className="flex flex-col gap-4">
                   <p className="text-white font-sans leading-[24px] tracking-[0.06em]">
@@ -24,8 +24,8 @@ const OnboardingPage = () => {
                   </p>
                   <p className="text-muted-foreground text-xs font-sans font-light leading-[18px] tracking-[0.06em]">
                     Start here to create a new vault. If this is your first
-                    vault, first vault, it will cost 2 MINA to create. Otherwise
-                    it will cost 1 MINA.
+                    vault, it will cost 2 MINA to create. Otherwise it will cost
+                    1 MINA.
                   </p>
                 </div>
                 <Button
@@ -36,7 +36,7 @@ const OnboardingPage = () => {
                 </Button>
               </div>
             </Card>
-            <Card className="p-8 w-[464px]">
+            <Card className="p-8 max-w-[464px] lg:w-[464px]">
               <div className="h-full flex flex-col gap-4 justify-between">
                 <div className="flex flex-col gap-4">
                   <p className="text-white font-sans leading-[24px] tracking-[0.06em]">

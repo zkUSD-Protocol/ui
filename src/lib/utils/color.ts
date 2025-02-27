@@ -1,15 +1,15 @@
 export function getGradientColorForLTV(percentage: number): string {
-  const healthy = { h: 120, s: 70, l: 50 };
-  const warning = { h: 60, s: 70, l: 50 };
-  const danger = { h: 0, s: 70, l: 50 };
+  const danger = { h: 0, s: 80, l: 50 };
+  const warning = { h: 30, s: 80, l: 50 };
+  const healthy = { h: 120, s: 80, l: 50 };
 
   if (percentage <= 40) {
     return `hsl(${healthy.h}, ${healthy.s}%, ${healthy.l}%)`;
   } else if (percentage < 50) {
-    const t = (percentage - 40) / 10;
+    const t = (percentage - 35) / 15;
     return interpolateColor(healthy, warning, t);
   } else if (percentage < 66) {
-    const t = (percentage - 50) / (66 - 50);
+    const t = (percentage - 50) / 16;
     return interpolateColor(warning, danger, t);
   } else {
     return `hsl(${danger.h}, ${danger.s}%, ${danger.l}%)`;
@@ -23,16 +23,15 @@ export function getGaugeColorForHealthFactor(healthFactor: number): string {
     Math.max(0, ((healthFactor - 100) / (300 - 100)) * 100)
   );
 
-  // For demonstration purposes, we assume these HSL values:
-  const danger = { h: 0, s: 80, l: 50 }; // e.g. red
-  const warning = { h: 30, s: 80, l: 50 }; // e.g. orange/yellow
-  const healthy = { h: 120, s: 80, l: 50 }; // e.g. green
+  const danger = { h: 0, s: 80, l: 50 };
+  const warning = { h: 30, s: 80, l: 50 };
+  const healthy = { h: 120, s: 80, l: 50 };
 
   if (percentage <= 15) {
     const t = percentage / 15;
     return interpolateColor(danger, warning, t);
-  } else if (percentage <= 30) {
-    const t = (percentage - 15) / 15;
+  } else if (percentage <= 40) {
+    const t = (percentage - 15) / 25;
     return interpolateColor(warning, healthy, t);
   } else {
     return `hsl(${healthy.h}, ${healthy.s}%, ${healthy.l}%)`;
