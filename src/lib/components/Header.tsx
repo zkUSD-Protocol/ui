@@ -9,7 +9,7 @@ const Header = () => {
       <div className="relative w-20 h-5 ">
         <Link href="/">
           <Image
-            src="/assets/wordmark.svg"
+            src="/assets/fizk.svg"
             alt="wordmark"
             layout="fill"
             objectFit="contain"

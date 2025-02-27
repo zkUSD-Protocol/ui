@@ -147,6 +147,19 @@ export function VaultManagerProvider({
 
       setTxPhase(TransactionPhase.BUILDING);
 
+      const minaAccount = await fetchMinaAccount({
+        publicKey: account,
+      });
+
+      console.log("minaAccount", minaAccount);
+
+      if (!minaAccount.account) {
+        setTxError(
+          "Mina account not found, you probably need to fund your account"
+        );
+        return;
+      }
+
       const txHandle = await zkusd?.createVault(account, vaultPrivateKey, {
         extraSigners: [vaultPrivateKey],
       });

@@ -13,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head></head>
+      <head>
+        <link rel="icon" href="/assets/favicon_fizk.png" />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>
