@@ -50,6 +50,18 @@ export const AccountProvider = ({
         throw new Error("No accounts found");
       }
 
+      let networkID;
+
+      if (process.env.NEXT_PUBLIC_CHAIN === "lightnet") {
+        networkID = "mina:testnet";
+      } else {
+        networkID = `mina:${process.env.NEXT_PUBLIC_CHAIN}`;
+      }
+
+      await window.mina?.switchChain({
+        networkID,
+      });
+
       const publicKey = PublicKey.fromBase58(accounts[0]);
       //Lets fetch the balance of the account
       const minaAccount = await fetchMinaAccount({
