@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import { Providers } from "@/lib/context";
 
 export const metadata: Metadata = {
-  title: "zkUSD",
-  description: "Stablecoin",
+  title: "Fizk - zkUSD Protocol",
+  description: "Stablecoin on Mina",
 };
 
 export default function RootLayout({
@@ -13,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head></head>
+      <head>
+        <link rel="icon" href="/assets/favicon_fizk.png" />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>
