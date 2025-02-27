@@ -6,6 +6,7 @@ import { getHealthFactorRisk } from "../utils/loan";
 
 const HealthFactor = () => {
   const { vault, projectedState } = useVault();
+
   if (!vault) return null;
   return (
     <div className="flex flex-col gap-2 p-10 w-full">
@@ -25,16 +26,19 @@ const HealthFactor = () => {
                   .replace(")", ", 0.3)"),
               }}
             >
-              {vault.currentHealthFactor !== 0 && (
+              {vault.currentHealthFactor !== -1 && (
                 <h2 className="font-mono text-sm  tracking-[0.02em] text-white">
                   {getHealthFactorRisk(vault.currentHealthFactor)}
                 </h2>
               )}
             </div>
           </div>
-          <p className="font-sans font-light text-muted-foreground text-xs tracking-[0.06em]">
+          <p className="hidden sm:block font-sans font-light text-muted-foreground text-xs tracking-[0.06em]">
             Your health score tracks the overall healthiness of your vault. If
             you fall below 100, your vault will be liquidated
+          </p>
+          <p className="block sm:hidden font-sans font-light text-muted-foreground text-xs tracking-[0.06em]">
+            Your health score tracks the overall healthiness of your vault.
           </p>
         </div>
         <div className="relative w-1/2 flex justify-center items-center scale-125">
@@ -42,7 +46,7 @@ const HealthFactor = () => {
             min={100}
             value={vault.currentHealthFactor}
             projectedValue={
-              !!projectedState && projectedState?.healthFactor > 0
+              !!projectedState && projectedState?.healthFactor !== -1
                 ? projectedState?.healthFactor
                 : undefined
             }

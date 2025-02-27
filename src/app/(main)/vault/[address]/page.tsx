@@ -34,7 +34,7 @@ export default function VaultPage() {
     <>
       {isConnected && (
         <>
-          <div className="flex max-w-5xl w-full mx-auto h-[540px] my-auto gap-6 ">
+          <div className="flex flex-col-reverse max-w-5xl w-full mx-auto md:h-[540px] my-auto gap-6 md:flex-row ">
             <div className="flex-1 flex flex-col gap-2">
               <VaultActions />
               <ProjectedInfo />

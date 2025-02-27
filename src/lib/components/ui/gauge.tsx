@@ -88,6 +88,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
 
     // --- Calculate projected triangle (if provided) ---
     let projectedTriangleElement = null;
+
     if (typeof projectedValue === "number") {
       // Map projectedValue from [min, max] to percentage
       const projectedPercentage = Math.min(
@@ -226,7 +227,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
         {/* --- Projected value box --- */}
 
         <div className="absolute bottom-6 left-1/2 transform -translate-x-[45%]">
-          {value !== 0 ? (
+          {value !== -1 ? (
             <div
               className="py-[6px] px-[7px] w-fit rounded-md"
               style={{

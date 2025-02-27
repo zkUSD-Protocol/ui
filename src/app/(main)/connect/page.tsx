@@ -29,7 +29,7 @@ const ConnectPage = () => {
           <h1 className="text-left font-serif font-thin italic text-3xl leading-[32px] tracking-tighter text-white">
             Connect Wallet
           </h1>
-          <Card className="p-8 w-[464px]">
+          <Card className="p-8 w-full sm:w-[464px]">
             <div className="flex flex-col gap-4">
               <p className="text-white font-sans leading-[24px] tracking-[0.06em]">
                 Connect your wallet to get started

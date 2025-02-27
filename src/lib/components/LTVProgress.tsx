@@ -20,6 +20,11 @@ const LTVProgress = () => {
 
   const projectedColor = getGradientColorForLTV(ltv);
 
+  const shouldShowProjected =
+    !!projectedState &&
+    projectedState.ltv >= 0 &&
+    !(vault.debtAmount > 0n && projectedState.ltv === 0);
+
   return (
     <>
       <div className="flex items-end relative h-20 ">
@@ -49,7 +54,7 @@ const LTVProgress = () => {
         >
           {vault.collateralAmount > 0n && vault.debtAmount > 0n && (
             <>
-              {!projectedState && (
+              {!shouldShowProjected && (
                 <p className="text-xs leading-[18px] tracking-[0.06em]">
                   Current
                 </p>
@@ -62,7 +67,7 @@ const LTVProgress = () => {
             </>
           )}
         </div>
-        {!!projectedState && projectedState.ltv > 0 && (
+        {shouldShowProjected && (
           <div
             className={`absolute bottom-[1px] transform -translate-x-1/2 flex flex-col items-center`}
             style={{
@@ -84,7 +89,7 @@ const LTVProgress = () => {
 
         <Progress value={ltv} variant="gradient" className="w-full h-[1px]" />
       </div>
-      <div className="flex text-xs leading-[18px] tracking-[0.06em] font-light text-muted-foreground">
+      <div className="hidden sm:flex text-xs leading-[18px] tracking-[0.06em] font-light text-muted-foreground">
         <div className="w-2/3 flex gap-2 text-center">
           <div className="w-1/3">Conservative</div>
           <Separator orientation="vertical" />

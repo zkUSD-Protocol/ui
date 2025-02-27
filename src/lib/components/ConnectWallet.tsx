@@ -13,7 +13,7 @@ const ConnectWallet = () => {
     <>
       {isConnected && vaultsLoaded ? (
         <div className="flex items-center gap-4">
-          <div className="flex gap-4 bg-card border border-card-border rounded-lg p-2 font-mono text-xs tracking-[0.02em] text-white">
+          <div className="hidden sm:flex gap-4 bg-card border border-card-border rounded-lg p-2 font-mono text-xs tracking-[0.02em] text-white">
             <div className="">{formatDisplayAccount(account!.toBase58())}</div>
             <div className="flex-grow -my-2">
               <Separator orientation="vertical" />

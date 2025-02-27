@@ -22,7 +22,7 @@ export function calculateHealthFactor(
 ): number {
   // If there's no debt, return maximum health factor
   if (debtAmount === 0n || minaPrice === BigInt(0)) {
-    return 0;
+    return -1;
   }
 
   // Calculate USD value of collateral
@@ -37,6 +37,10 @@ export function calculateHealthFactor(
   // Calculate health factor (scaled by COLLATERAL_RATIO_PRECISION)
   const healthFactor =
     (maxAllowedDebt * BigInt(COLLATERAL_RATIO_PRECISION)) / debtAmount;
+
+  if (healthFactor < 0) {
+    return -1;
+  }
 
   return Number(healthFactor);
 }
@@ -64,6 +68,10 @@ export function calculateLTV(
 
   // Calculate LTV as (debt / collateralValue) * 100
   const ltv = (debtAmount * 100n) / collateralValue;
+
+  if (ltv < 0) {
+    return 0.0;
+  }
 
   return Number(ltv);
 }
