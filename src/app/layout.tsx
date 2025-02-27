@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import { Providers } from "@/lib/context";
 
 export const metadata: Metadata = {
-  title: "zkUSD",
-  description: "Stablecoin",
+  title: "Fizk - zkUSD Protocol",
+  description: "Stablecoin on Mina",
 };
 
 export default function RootLayout({
