@@ -27,7 +27,7 @@ const VaultSelect = () => {
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Card className="group flex justify-between items-center font-mono uppercase tracking-[0.06em] text-xs font-normal leading-[18px] py-3 px-5 w-48 h-11 cursor-pointer">
-            Select
+            Vaults
             <ChevronUp className="w-3 h-3 my-auto transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </Card>
         </DropdownMenuTrigger>
