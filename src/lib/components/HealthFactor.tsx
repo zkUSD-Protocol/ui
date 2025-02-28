@@ -10,8 +10,8 @@ const HealthFactor = () => {
   if (!vault) return null;
   return (
     <div className="flex flex-col gap-2 p-10 w-full">
-      <div className="flex h-24 gap-2 ">
-        <div className="w-1/2 flex flex-col gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 ">
+        <div className="w-full sm:w-1/2 flex flex-col gap-2">
           <div className="flex justify-between">
             <h3 className="font-sans tracking-[0.06em] text-white">
               Health Score
@@ -41,7 +41,7 @@ const HealthFactor = () => {
             Your health score tracks the overall healthiness of your vault.
           </p>
         </div>
-        <div className="relative w-1/2 flex justify-center items-center scale-125">
+        <div className="relative w-full sm:w-1/2 flex justify-center items-center scale-125">
           <Gauge
             min={100}
             value={vault.currentHealthFactor}

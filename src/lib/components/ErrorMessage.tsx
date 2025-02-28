@@ -12,7 +12,10 @@ const ErrorMessage = ({ error }: ErrorMessageProps) => {
         style={{ width: "12px", height: "12px" }}
         className="my-auto"
       />
-      <span className="mt-[3px]">{error}</span>
+      <span
+        className="mt-[3px]"
+        dangerouslySetInnerHTML={{ __html: error }}
+      ></span>
     </div>
   );
 };

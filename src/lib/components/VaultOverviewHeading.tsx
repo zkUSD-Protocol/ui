@@ -22,7 +22,7 @@ const VaultOverviewHeading = ({
       {openSection === "overview" ? (
         <div className="flex justify-between w-full">
           <div className="flex gap-4 items-end">
-            <h1 className="font-serif font-thin italic text-3xl leading-[32px] tracking-tighter text-white">
+            <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
               Your vault
             </h1>
             <p className="hidden sm:block font-mono text-xs leading-[18px] tracking-[0.02em] text-white">

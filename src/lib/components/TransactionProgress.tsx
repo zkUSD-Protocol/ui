@@ -34,22 +34,36 @@ export function TransactionProgress({ phase }: TransactionProgressProps) {
   const progress = (getStepNumber(phase) / 7) * 100;
 
   // Get status message
-  const getStatusMessage = (phase: TransactionPhase): string => {
+  const getStatusMessage = (
+    phase: TransactionPhase
+  ): { full: string; short: string } => {
     switch (phase) {
       case TransactionPhase.BUILDING:
-        return "1/6 - Building the transaction";
+        return {
+          full: "1/6 - Building the transaction",
+          short: "1/6 - Building",
+        };
       case TransactionPhase.SIGNING:
-        return "2/6 - Sign the transaction with your wallet";
+        return { full: "2/6 - Sign the transaction", short: "2/6 - Sign" };
       case TransactionPhase.PROVING:
-        return "3/6 - Proving the transaction";
+        return {
+          full: "3/6 - Proving the transaction",
+          short: "3/6 - Proving",
+        };
       case TransactionPhase.SENDING:
-        return "4/6 - Sending the transaction";
+        return {
+          full: "4/6 - Sending the transaction",
+          short: "4/6 - Sending",
+        };
       case TransactionPhase.PENDING_INCLUSION:
-        return "5/6 - Pending inclusion in a block";
+        return {
+          full: "5/6 - Pending inclusion in a block",
+          short: "5/6 - Pending",
+        };
       case TransactionPhase.INCLUDED:
-        return "6/6 - Transaction included";
+        return { full: "6/6 - Transaction included", short: "6/6 - Included" };
       default:
-        return "Transaction status unknown";
+        return { full: "Transaction status unknown", short: "Status unknown" };
     }
   };
 
@@ -57,12 +71,15 @@ export function TransactionProgress({ phase }: TransactionProgressProps) {
     <div className="w-full space-y-2">
       <div className="flex gap-2 h-5 items-center tracking-[0.06em]">
         <p className="text-xs font-sans font-light text-muted-foreground">
-          {getStatusMessage(phase)}
+          <span className="hidden sm:inline">
+            {getStatusMessage(phase).full}
+          </span>
+          <span className="sm:hidden">{getStatusMessage(phase).short}</span>
         </p>
 
         {txHash && (
           <Link
-            className="mb-[2px]"
+            className="mb-[2px] whitespace-nowrap"
             target="_blank"
             href={`${process.env.NEXT_PUBLIC_EXPLORER_TRANSACTION_URL}${txHash}`}
           >

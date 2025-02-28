@@ -34,7 +34,7 @@ export default function VaultPage() {
     <>
       {isConnected && (
         <>
-          <div className="flex flex-col-reverse max-w-5xl w-full mx-auto md:h-[540px] my-auto gap-6 md:flex-row ">
+          <div className="mt-16 flex flex-col-reverse max-w-5xl w-full mx-auto md:h-[540px] my-auto gap-6 md:flex-row ">
             <div className="flex-1 flex flex-col gap-2">
               <VaultActions />
               <ProjectedInfo />
@@ -43,7 +43,7 @@ export default function VaultPage() {
               <VaultOverview />
             </div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 mt-5 sm:mt-0">
             {!isMinaPriceLoading && (
               <div className="flex items-end gap-2">
                 <div className="font-sans text-xs  tracking-[0.08em]">

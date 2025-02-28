@@ -83,6 +83,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   const { minaPrice } = usePrice();
 
   const txHashRef = useRef<string | undefined>(txHash);
+  const txPhaseRef = useRef<TransactionPhase | undefined>(txPhase);
 
   //General state
   const [vault, setVault] = useState<VaultState | null>(null);
@@ -185,7 +186,8 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     txHashRef.current = txHash;
-  }, [txHash]);
+    txPhaseRef.current = txPhase;
+  }, [txHash, txPhase]);
 
   const executeVaultAction = useCallback(
     async (
@@ -204,9 +206,11 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
         txHandle?.subscribeToLifecycle(
           async (lifecycle: TransactionStatusNew) => {
+            console.log("lifecycle", lifecycle);
             let phase: TransactionPhase = lifecycle.phase;
             let status: TransactionPhaseStatus = lifecycle.status;
-            if (txPhase !== phase) {
+            if (txPhaseRef.current !== phase) {
+              console.log("setting phase", phase);
               setTxPhase(phase);
             }
 

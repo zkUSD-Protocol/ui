@@ -76,7 +76,7 @@ const CreateVault = ({ open, onOpenChange }: CreateNewVaultProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-6 ">
+        <div className="flex flex-row items-center gap-6 ">
           <div className="grid flex-1 gap-2">
             <Card
               className="py-2 px-4 break-all font-mono leading-[18px] text-xs tracking-[0.06em]"
@@ -92,7 +92,7 @@ const CreateVault = ({ open, onOpenChange }: CreateNewVaultProps) => {
             size="sm"
             onClick={copyToClipboard}
           >
-            <span className="">Copy</span>
+            <span className="hidden sm:block">Copy</span>
             {copied ? (
               <Check className="h-4 w-4" />
             ) : (
@@ -101,7 +101,7 @@ const CreateVault = ({ open, onOpenChange }: CreateNewVaultProps) => {
           </Button>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 mr-auto">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 mx-auto sm:mr-auto ">
           <Button onClick={handleCreate} disabled={!vaultKeyPair}>
             Create Vault
           </Button>

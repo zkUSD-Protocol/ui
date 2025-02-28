@@ -61,6 +61,7 @@ export function VaultManagerProvider({
   const [vaultAddresses, setVaultAddresses] = useState<string[] | null>(null);
   const [vaultsLoaded, setVaultsLoaded] = useState(false);
   const txHashRef = useRef<string | undefined>(txHash);
+  const txPhaseRef = useRef<TransactionPhase | undefined>(txPhase);
   const router = useRouter();
   // Load vaults from localStorage when the account changes.
   useEffect(() => {
@@ -127,7 +128,8 @@ export function VaultManagerProvider({
 
   useEffect(() => {
     txHashRef.current = txHash;
-  }, [txHash]);
+    txPhaseRef.current = txPhase;
+  }, [txHash, txPhase]);
 
   // Generate a new vault address using a random private key.
   const generateVaultAddress = useCallback(() => {
@@ -168,7 +170,7 @@ export function VaultManagerProvider({
         async (lifecycle: TransactionStatusNew) => {
           let phase: TransactionPhase = lifecycle.phase;
           let status: TransactionPhaseStatus = lifecycle.status;
-          if (txPhase !== phase) {
+          if (txPhaseRef.current !== phase) {
             setTxPhase(phase);
           }
 
