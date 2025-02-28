@@ -256,7 +256,7 @@ const VaultActions = () => {
     <div className="flex flex-col gap-4">
       <div className="flex justify-between w-full">
         <div className="flex gap-4 items-end">
-          <h1 className="font-serif font-thin italic text-3xl leading-[32px] tracking-tighter text-white">
+          <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
             {tabTitles[activeTab]}
           </h1>
         </div>
