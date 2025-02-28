@@ -206,11 +206,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
         txHandle?.subscribeToLifecycle(
           async (lifecycle: TransactionStatusNew) => {
-            console.log("lifecycle", lifecycle);
             let phase: TransactionPhase = lifecycle.phase;
             let status: TransactionPhaseStatus = lifecycle.status;
             if (txPhaseRef.current !== phase) {
-              console.log("setting phase", phase);
               setTxPhase(phase);
             }
 

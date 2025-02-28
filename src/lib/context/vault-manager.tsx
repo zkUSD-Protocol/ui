@@ -153,8 +153,6 @@ export function VaultManagerProvider({
         publicKey: account,
       });
 
-      console.log("minaAccount", minaAccount);
-
       if (!minaAccount.account) {
         setTxError(
           "Mina account not found, you probably need to fund your account"

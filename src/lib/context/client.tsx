@@ -28,8 +28,6 @@ export function ClientProvider({ children }: { children: React.ReactNode }) {
       const client = await ZKUSDClient.create({
         chain: process.env.NEXT_PUBLIC_CHAIN! as blockchain,
         httpProver: process.env.NEXT_PUBLIC_PROVER_URL!,
-        engineAddress: process.env.NEXT_PUBLIC_ENGINE_ADDRESS!,
-        tokenAddress: process.env.NEXT_PUBLIC_TOKEN_ADDRESS!,
       });
       setZkusd(client);
     };
