@@ -125,28 +125,28 @@ declare global {
     addChain(args: AddChainArgs): Promise<ChainInfoArgs | ProviderError>;
     switchChain(args: SwitchChainArgs): Promise<ChainInfoArgs | ProviderError>;
     createNullifier(
-      args: CreateNullifierArgs
+      args: CreateNullifierArgs,
     ): Promise<Nullifier | ProviderError>;
     signMessage(args: SignMessageArgs): Promise<SignedData | ProviderError>;
     signJsonMessage(
-      args: SignJsonMessageArgs
+      args: SignJsonMessageArgs,
     ): Promise<SignedData | ProviderError>;
     verifyMessage(args: VerifyMessageArgs): Promise<boolean | ProviderError>;
     signFields(
-      args: SignFieldsArguments
+      args: SignFieldsArguments,
     ): Promise<SignedFieldsData | ProviderError>;
     verifyFields(args: VerifyFieldsArguments): Promise<boolean | ProviderError>;
     requestAccounts(): Promise<string[] | ProviderError>;
     getAccounts(): Promise<string[]>;
     requestNetwork(): Promise<ChainInfoArgs>;
     sendPayment(
-      args: SendPaymentArgs
+      args: SendPaymentArgs,
     ): Promise<SendTransactionHash | ProviderError>;
     sendStakeDelegation(
-      args: SendStakeDelegationArgs
+      args: SendStakeDelegationArgs,
     ): Promise<SendTransactionHash | ProviderError>;
     sendTransaction(
-      args: SendTransactionArgs
+      args: SendTransactionArgs,
     ): Promise<SendZkTransactionResult | ProviderError>;
   }
 
@@ -155,4 +155,4 @@ declare global {
   }
 }
 
-export {};
+export type {};

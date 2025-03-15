@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { JsonProof } from "o1js";
 import { AggregateOraclePricesProof } from "@zkusd/core";
+import type { JsonProof } from "o1js";
 
 export function useLatestProof() {
   return useQuery({
@@ -16,7 +16,7 @@ export function useLatestProof() {
 
       const proof: AggregateOraclePricesProof =
         await AggregateOraclePricesProof.fromJSON(
-          response.data.proof as JsonProof
+          response.data.proof as JsonProof,
         );
 
       return proof;

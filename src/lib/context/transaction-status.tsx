@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { TransactionPhase, ZkusdEngineTransactionType } from "@zkusd/core";
+import { type TransactionPhase, ZkusdEngineTransactionType } from "@zkusd/core";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 interface TransactionStatusContextValue {
   txPhase: TransactionPhase | undefined;
@@ -56,10 +57,10 @@ export function TransactionStatusProvider({
   children: React.ReactNode;
 }) {
   const [txPhase, setTxPhase] = useState<TransactionPhase | undefined>(
-    undefined
+    undefined,
   );
   const [txType, setTxType] = useState<ZkusdEngineTransactionType | undefined>(
-    undefined
+    undefined,
   );
   const [txError, setTxError] = useState<string | undefined>(undefined);
   const [title, setTitle] = useState<string>("");
@@ -103,7 +104,7 @@ export function useTransactionStatus() {
   const context = useContext(TransactionStatusContext);
   if (!context) {
     throw new Error(
-      "useTransactionStatus must be used within a TransactionStatusProvider"
+      "useTransactionStatus must be used within a TransactionStatusProvider",
     );
   }
   return context;

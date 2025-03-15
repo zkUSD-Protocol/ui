@@ -35,7 +35,7 @@ export function TransactionProgress({ phase }: TransactionProgressProps) {
 
   // Get status message
   const getStatusMessage = (
-    phase: TransactionPhase
+    phase: TransactionPhase,
   ): { full: string; short: string } => {
     switch (phase) {
       case TransactionPhase.BUILDING:

@@ -3,7 +3,7 @@ export const formatDisplayAccount = (account: string, prefix = 6, suffix = 4) =>
 
 export const formatMinaAmount = (
   rawAmount: string | number | bigint,
-  decimals = 4
+  decimals = 4,
 ): string => {
   const amount = Number(rawAmount) / 1e9;
 

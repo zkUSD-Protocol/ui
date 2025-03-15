@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useLatestProof } from "../hooks/use-latest-proof";
 
 interface PriceContextProps {
@@ -18,7 +19,7 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (latestProof?.publicOutput.minaPrice.priceNanoUSD) {
       setMinaPrice(
-        BigInt(latestProof.publicOutput.minaPrice.priceNanoUSD.toString())
+        BigInt(latestProof.publicOutput.minaPrice.priceNanoUSD.toString()),
       );
     }
   }, [latestProof]);

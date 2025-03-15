@@ -1,12 +1,6 @@
 "use client";
-import type { Metadata } from "next";
 import "../globals.css";
-import { Header, TransactionStatus, VaultSelect } from "@/lib/components";
-import { useAccount } from "@/lib/context/account";
-import { useVaultManager } from "@/lib/context/vault-manager";
-import { usePrice } from "@/lib/context/price";
-import { formatMinaAmount } from "@/lib/utils/formatting";
-import AppRouting from "@/lib/components/AppInitializer";
+import { Header, TransactionStatus } from "@/lib/components";
 import AppInitializer from "@/lib/components/AppInitializer";
 
 export default function AppLayout({

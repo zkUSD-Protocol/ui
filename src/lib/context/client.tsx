@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { blockchain, ZKUSDClient } from "@zkusd/core";
+import { ZKUSDClient, type blockchain } from "@zkusd/core";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 /**
  * Define the shape of what's in your contracts context.
  * If you have multiple contract instances, include them here.
