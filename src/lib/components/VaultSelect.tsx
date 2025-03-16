@@ -1,4 +1,3 @@
-import { ChevronUp, Import, Plus } from "lucide-react";
 import { CreateVault, ImportVault } from "@/lib/components/";
 import { Card } from "@/lib/components/ui";
 import {
@@ -9,11 +8,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/lib/components/ui/dropdown-menu";
+import { ChevronUp, Import, Plus } from "lucide-react";
+import { ArrowRight, Vault } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useVaultManager } from "../context/vault-manager";
-import { Vault, ArrowRight } from "lucide-react";
 import { formatDisplayAccount } from "../utils/formatting";
-import Link from "next/link";
 
 const VaultSelect = () => {
   const { vaultAddresses } = useVaultManager();

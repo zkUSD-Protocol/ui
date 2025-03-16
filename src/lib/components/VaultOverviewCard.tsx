@@ -1,9 +1,8 @@
-import React from "react";
+import { HealthFactor, LTV } from "@/lib/components";
 import { useVault } from "../context/vault";
-import { Card } from "./ui/card";
 import { formatMinaAmount } from "../utils/formatting";
 import { Separator } from "./ui";
-import { HealthFactor, LTV } from "@/lib/components";
+import { Card } from "./ui/card";
 
 const VaultOverviewCard = () => {
   const { vault } = useVault();

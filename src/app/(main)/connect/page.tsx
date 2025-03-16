@@ -1,10 +1,10 @@
 "use client";
-import { CreateVault, ErrorMessage, ImportVault } from "@/lib/components";
+import { ErrorMessage } from "@/lib/components";
 import ConnectingWallet from "@/lib/components/ConnectingWallet";
-import { Card, Button } from "@/lib/components/ui";
+import { Button, Card } from "@/lib/components/ui";
 import { useAccount } from "@/lib/context/account";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 
 const ConnectPage = () => {
   const { connect, isConnected } = useAccount();
@@ -23,7 +23,7 @@ const ConnectPage = () => {
         error.message.includes("No accounts found")
       ) {
         setError(
-          "We can't detect a wallet. <a href='https://chromewebstore.google.com/detail/auro-wallet/cnmamaachppnkjgnildpdmkaakejnhae?hl=en' target='_blank' rel='noopener noreferrer' class='underline text-blue-400 hover:text-blue-300'>Get Auro Wallet here.</a>"
+          "We can't detect a wallet. <a href='https://chromewebstore.google.com/detail/auro-wallet/cnmamaachppnkjgnildpdmkaakejnhae?hl=en' target='_blank' rel='noopener noreferrer' class='underline text-blue-400 hover:text-blue-300'>Get Auro Wallet here.</a>",
         );
       }
     }

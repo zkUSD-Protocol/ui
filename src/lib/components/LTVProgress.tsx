@@ -1,9 +1,8 @@
-import React from "react";
-import { Progress } from "./ui/progress";
-import { useVault } from "../context/vault";
-import { Triangle } from "lucide-react";
-import { Separator } from "./ui";
 import { getGradientColorForLTV } from "@/lib/utils/color";
+import { Triangle } from "lucide-react";
+import { useVault } from "../context/vault";
+import { Separator } from "./ui";
+import { Progress } from "./ui/progress";
 
 const LTVProgress = () => {
   const { vault, projectedState } = useVault();

@@ -20,7 +20,7 @@ export function getGaugeColorForHealthFactor(healthFactor: number): string {
   // Convert health factor (100-300) to percentage (0-100)
   const percentage = Math.min(
     100,
-    Math.max(0, ((healthFactor - 100) / (300 - 100)) * 100)
+    Math.max(0, ((healthFactor - 100) / (300 - 100)) * 100),
   );
 
   const danger = { h: 0, s: 80, l: 50 };
@@ -41,7 +41,7 @@ export function getGaugeColorForHealthFactor(healthFactor: number): string {
 function interpolateColor(
   c1: { h: number; s: number; l: number },
   c2: { h: number; s: number; l: number },
-  t: number
+  t: number,
 ): string {
   const h = c1.h + (c2.h - c1.h) * t;
   const s = c1.s + (c2.s - c1.s) * t;

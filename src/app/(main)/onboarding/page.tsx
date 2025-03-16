@@ -1,8 +1,7 @@
 "use client";
 import { CreateVault, ImportVault } from "@/lib/components";
 import { Button, Card } from "@/lib/components/ui";
-import { useVaultManager } from "@/lib/context/vault-manager";
-import React, { useState } from "react";
+import { useState } from "react";
 
 const OnboardingPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

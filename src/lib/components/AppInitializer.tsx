@@ -1,11 +1,11 @@
 // AppInitializer.tsx
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useClient } from "@/lib/context/client";
 import { useAccount } from "@/lib/context/account";
+import { useClient } from "@/lib/context/client";
 import { useVaultManager } from "@/lib/context/vault-manager";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import FadeLoader from "react-spinners/FadeLoader";
 
 interface AppInitializerProps {
@@ -27,8 +27,8 @@ export default function AppInitializer({ children }: AppInitializerProps) {
   const defaultRoute = !isConnected
     ? "/connect"
     : !vaultAddresses || vaultAddresses.length === 0
-    ? "/onboarding"
-    : `/vault/${vaultAddresses[0]}`;
+      ? "/onboarding"
+      : `/vault/${vaultAddresses[0]}`;
 
   // Determine if the current pathname is valid.
   const validRoute =

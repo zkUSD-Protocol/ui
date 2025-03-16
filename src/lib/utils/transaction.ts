@@ -1,14 +1,14 @@
-import { Mina, PublicKey, UInt64 } from "o1js";
 import {
-  ZkusdEngineTransactionArgs,
-  ZkusdEngineTransactionType,
   TxLifecycleStatus,
+  type ZkusdEngineTransactionArgs,
+  type ZkusdEngineTransactionType,
 } from "@zkusd/core";
+import { Mina, type PublicKey, UInt64 } from "o1js";
 
 const prepareTransaction = async (
   callback: () => Promise<void>,
   memo: string,
-  account: PublicKey
+  account: PublicKey,
 ) => {
   if (!account) {
     throw new Error("No account provided");
@@ -27,7 +27,7 @@ const prepareTransaction = async (
       },
       async () => {
         await callback();
-      }
+      },
     );
 
     return tx;
@@ -39,7 +39,7 @@ const prepareTransaction = async (
 
 const serializeTransaction = (tx: Mina.Transaction<false, false>) => {
   const length = tx.transaction.accountUpdates.length;
-  let blindingValues = [];
+  const blindingValues = [];
   for (let i = 0; i < length; i++) {
     const la = tx.transaction.accountUpdates[i].lazyAuthorization;
     if (
@@ -62,7 +62,7 @@ const serializeTransaction = (tx: Mina.Transaction<false, false>) => {
       nonce: tx.transaction.feePayer.body.nonce.toBigint().toString(),
     },
     null,
-    2
+    2,
   );
 };
 
