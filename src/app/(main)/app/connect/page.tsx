@@ -2,30 +2,24 @@
 import { ErrorMessage } from "@/lib/components";
 import ConnectingWallet from "@/lib/components/ConnectingWallet";
 import { Button, Card } from "@/lib/components/ui";
-import { useAccount } from "@/lib/context/account";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useConnect, useConnectors } from "wagmina";
 
 const ConnectPage = () => {
-  const { connect, isConnected } = useAccount();
-  const router = useRouter();
+  const { connectAsync: wagminaConnectAsync } = useConnect();
+  const connectors = useConnectors();
+  const auroWalletConnector = useMemo(
+    () => connectors.find((c) => c.id === "com.aurowallet"),
+    [connectors],
+  );
+
   const [isConnectingWalletOpen, setIsConnectingWalletOpen] = useState(false);
-  const [error, setError] = useState("");
   const handleConnect = async () => {
-    try {
-      await connect();
+    if (auroWalletConnector) {
       setIsConnectingWalletOpen(true);
-      // Navigate immediately after a successful connection
-      router.push("/app/onboarding"); // or wherever you want to route the user
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("No accounts found")
-      ) {
-        setError(
-          "We can't detect a wallet. <a href='https://chromewebstore.google.com/detail/auro-wallet/cnmamaachppnkjgnildpdmkaakejnhae?hl=en' target='_blank' rel='noopener noreferrer' class='underline text-blue-400 hover:text-blue-300'>Get Auro Wallet here.</a>",
-        );
-      }
+      wagminaConnectAsync({
+        connector: auroWalletConnector,
+      }).finally(() => setIsConnectingWalletOpen(false));
     }
   };
 
@@ -41,11 +35,17 @@ const ConnectPage = () => {
               <p className="text-center sm:text-left text-white font-sans leading-[24px] tracking-[0.06em]">
                 Connect your wallet to get started
               </p>
-
-              <Button className="w-fit" onClick={handleConnect}>
-                Connect Wallet
-              </Button>
-              {error && <ErrorMessage error={error} />}
+              {auroWalletConnector ? (
+                <Button className="w-fit" onClick={handleConnect}>
+                  Connect Wallet
+                </Button>
+              ) : (
+                <ErrorMessage
+                  error={
+                    "We can't detect a wallet. <a href='https://chromewebstore.google.com/detail/auro-wallet/cnmamaachppnkjgnildpdmkaakejnhae?hl=en' target='_blank' rel='noopener noreferrer' class='underline text-blue-400 hover:text-blue-300'>Get Auro Wallet here.</a>"
+                  }
+                />
+              )}
             </div>
           </Card>
         </div>

@@ -8,10 +8,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/lib/components/ui";
+import { useClient } from "@lib/context/client";
 import { ZkusdEngineTransactionType } from "@zkusd/core";
-import { UInt64 } from "o1js";
-import { useEffect, useState } from "react";
-import { useAccount } from "../context/account";
+import { TokenId, UInt64 } from "o1js";
+import { useEffect, useMemo, useState } from "react";
+import { useAccount, useBalance, useFetchAccount } from "wagmina";
 import { usePrice } from "../context/price";
 import { useVault } from "../context/vault";
 import { formatMinaAmount, toRawMinaAmount } from "../utils/formatting";
@@ -33,7 +34,22 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
     vault,
   } = useVault();
 
-  const { minaBalance, zkusdBalance } = useAccount();
+  const { address } = useAccount();
+  const { zkusd } = useClient();
+  const { data: zkusdAccount } = useFetchAccount({
+    address,
+    tokenId: zkusd ? TokenId.toBase58(zkusd.getTokenId("token")) : undefined,
+    watch: true,
+  });
+  const zkusdBalance = useMemo(
+    () => zkusdAccount?.balance?.toBigInt(),
+    [zkusdAccount],
+  );
+  const { data: minaBalance } = useBalance({
+    address,
+    watch: true,
+  });
+
   const { minaPrice } = usePrice();
 
   const [amount, setAmount] = useState<string>("");

@@ -2,37 +2,36 @@
 
 import { ProjectedInfo, VaultActions, VaultSelect } from "@/lib/components";
 import { VaultOverview } from "@/lib/components/";
-import { useAccount } from "@/lib/context/account";
 import { useClient } from "@/lib/context/client";
 import { usePrice } from "@/lib/context/price";
 import { useVault } from "@/lib/context/vault";
 import { useVaultManager } from "@/lib/context/vault-manager";
 import { formatMinaAmount } from "@/lib/utils/formatting";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { useAccount } from "wagmina";
 
 export default function VaultPage() {
   const { address }: { address: string } = useParams();
-  const { initVault, vault } = useVault();
-  const { isConnected, account } = useAccount();
+  const { initVault } = useVault();
+  const { address: userAddress } = useAccount();
   const { zkusd } = useClient();
-  const router = useRouter();
   const { vaultAddresses } = useVaultManager();
   const { minaPrice, isLoading: isMinaPriceLoading } = usePrice();
 
   useEffect(() => {
     const loadVault = async () => {
-      if (!zkusd || !account) return;
+      if (!zkusd || !userAddress) return;
 
       await initVault(address);
     };
 
     loadVault();
-  }, [address, zkusd, account]);
+  }, [address, zkusd, userAddress, initVault]);
 
   return (
     <>
-      {isConnected && (
+      {userAddress && (
         <>
           <div className="mt-16 flex flex-col-reverse max-w-5xl w-full mx-auto md:h-[540px] my-auto gap-6 md:flex-row ">
             <div className="flex-1 flex flex-col gap-2">
@@ -55,7 +54,7 @@ export default function VaultPage() {
               </div>
             )}
 
-            {isConnected && vaultAddresses && vaultAddresses.length > 0 && (
+            {userAddress && vaultAddresses && vaultAddresses.length > 0 && (
               <VaultSelect />
             )}
           </div>
