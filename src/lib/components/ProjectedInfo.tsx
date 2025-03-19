@@ -1,6 +1,5 @@
-import React from "react";
-import { Card } from "./ui";
 import { Info } from "lucide-react";
+import { Card } from "./ui";
 
 const ProjectedInfo = () => {
   return (

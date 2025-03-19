@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import { cn } from "@/lib/utils/ui";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Triangle } from "lucide-react"; // import the triangle icon
 import { getGaugeColorForHealthFactor } from "@/lib/utils/color";
+import { cn } from "@/lib/utils/ui";
+import { type VariantProps, cva } from "class-variance-authority";
+import { Triangle } from "lucide-react"; // import the triangle icon
+import * as React from "react";
 
 const gaugeVariants = cva("relative", {
   variants: {
@@ -49,12 +49,12 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
       showValue = true,
       ...props
     },
-    ref
+    ref,
   ) => {
     // Map value from [min, max] to a percentage (0-100)
     const percentage = Math.min(
       100,
-      Math.max(0, ((value - min) / (max - min)) * 100)
+      Math.max(0, ((value - min) / (max - min)) * 100),
     );
     // Convert percentage to an angle (0-180°) for the semicircular arc
     const angle = (percentage * 180) / 100;
@@ -63,7 +63,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
       typeof projectedValue === "number"
         ? Math.min(
             100,
-            Math.max(0, ((projectedValue - min) / (max - min)) * 100)
+            Math.max(0, ((projectedValue - min) / (max - min)) * 100),
           )
         : undefined;
 
@@ -79,7 +79,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
       angle,
       currentTriangleRadius,
       centerX,
-      centerY
+      centerY,
     );
     const radialAngle =
       (Math.atan2(trianglePoint.y - centerY, trianglePoint.x - centerX) * 180) /
@@ -93,7 +93,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
       // Map projectedValue from [min, max] to percentage
       const projectedPercentage = Math.min(
         100,
-        Math.max(0, ((projectedValue - min) / (max - min)) * 100)
+        Math.max(0, ((projectedValue - min) / (max - min)) * 100),
       );
       const projectedAngle = (projectedPercentage * 180) / 100;
       // Use a negative offset to place the projected triangle *inside* the arc
@@ -103,7 +103,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
         projectedAngle,
         projectedTriangleRadius,
         centerX,
-        centerY
+        centerY,
       );
       const projectedRadialAngle =
         (Math.atan2(projectedPoint.y - centerY, projectedPoint.x - centerX) *
@@ -182,7 +182,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
                 "stroke-[20]",
                 variant === "gradient"
                   ? "stroke-[url(#risk-gradient)]"
-                  : "stroke-primary/20"
+                  : "stroke-primary/20",
               )}
               filter="url(#glow)"
               strokeLinecap="round"
@@ -197,7 +197,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
               "stroke-[1]",
               variant === "gradient"
                 ? "stroke-[url(#risk-gradient)]"
-                : "stroke-primary/20"
+                : "stroke-primary/20",
             )}
             strokeLinecap="round"
           />
@@ -265,7 +265,7 @@ const Gauge = React.forwardRef<HTMLDivElement, GaugeProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 Gauge.displayName = "Gauge";
@@ -279,7 +279,7 @@ function getPointOnArcCoordinates(
   angle: number,
   radius: number,
   centerX: number,
-  centerY: number
+  centerY: number,
 ): { x: number; y: number } {
   const radians = (angle * Math.PI) / 180;
   const x = centerX + radius * Math.cos(Math.PI - radians);

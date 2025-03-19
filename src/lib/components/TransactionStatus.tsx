@@ -1,5 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { ErrorMessage, TransactionProgress } from "@/lib/components";
+import { useTransactionStatus } from "@/lib/context/transaction-status";
+import { TransactionPhase } from "@zkusd/core";
+import { CircleCheck } from "lucide-react";
+import { CircleX } from "lucide-react";
+import { useEffect, useState } from "react";
+import FadeLoader from "react-spinners/FadeLoader";
 import {
   Dialog,
   DialogContent,
@@ -7,12 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { useTransactionStatus } from "@/lib/context/transaction-status";
-import FadeLoader from "react-spinners/FadeLoader";
-import { ErrorMessage, TransactionProgress } from "@/lib/components";
-import { CircleCheck } from "lucide-react";
-import { CircleX } from "lucide-react";
-import { TransactionPhase } from "@zkusd/core";
 
 const TransactionStatus = () => {
   const { txPhase, title, resetTxStatus, txError } = useTransactionStatus();

@@ -1,5 +1,3 @@
-import { Field, UInt64 } from "o1js";
-
 const COLLATERAL_RATIO = 150; // 150%
 const COLLATERAL_RATIO_PRECISION = 100;
 const UNIT_PRECISION = 1e9; // Mina has 9 decimal places
@@ -18,7 +16,7 @@ const UNIT_PRECISION = 1e9; // Mina has 9 decimal places
 export function calculateHealthFactor(
   collateralAmount: bigint,
   debtAmount: bigint,
-  minaPrice: bigint
+  minaPrice: bigint,
 ): number {
   // If there's no debt, return maximum health factor
   if (debtAmount === 0n || minaPrice === BigInt(0)) {
@@ -55,7 +53,7 @@ export function calculateHealthFactor(
 export function calculateLTV(
   collateralAmount: bigint,
   debtAmount: bigint,
-  minaPrice: bigint
+  minaPrice: bigint,
 ): number {
   // If there's no collateral, return 100% LTV
   if (collateralAmount === 0n || minaPrice === BigInt(0)) {

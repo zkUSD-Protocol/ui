@@ -1,15 +1,15 @@
 "use client";
 
 import { ProjectedInfo, VaultActions, VaultSelect } from "@/lib/components";
-import { useVault } from "@/lib/context/vault";
-import { useEffect, useState } from "react";
 import { VaultOverview } from "@/lib/components/";
 import { useAccount } from "@/lib/context/account";
-import { useParams, useRouter } from "next/navigation";
 import { useClient } from "@/lib/context/client";
 import { usePrice } from "@/lib/context/price";
+import { useVault } from "@/lib/context/vault";
 import { useVaultManager } from "@/lib/context/vault-manager";
 import { formatMinaAmount } from "@/lib/utils/formatting";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function VaultPage() {
   const { address }: { address: string } = useParams();

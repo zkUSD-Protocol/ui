@@ -1,5 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useVaultManager } from "@/lib/context/vault-manager";
+import { PublicKey } from "o1js";
+import { useEffect, useState } from "react";
+import ErrorMessage from "./ErrorMessage";
+import { Button } from "./ui";
 import {
   Dialog,
   DialogContent,
@@ -7,13 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { useVaultManager } from "@/lib/context/vault-manager";
-import { PublicKey } from "o1js";
-import { Button } from "./ui";
-import ErrorMessage from "./ErrorMessage";
 
 type ImportVaultProps = {
   open: boolean;

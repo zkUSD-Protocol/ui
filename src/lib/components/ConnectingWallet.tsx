@@ -1,16 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
-import { useTransactionStatus } from "@/lib/context/transaction-status";
-import FadeLoader from "react-spinners/FadeLoader";
 import { CircleCheck } from "lucide-react";
+import { useEffect } from "react";
+import FadeLoader from "react-spinners/FadeLoader";
 import { useVaultManager } from "../context/vault-manager";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 type ConnectingWalletProps = {
   open: boolean;

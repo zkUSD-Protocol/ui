@@ -1,7 +1,6 @@
-import React from "react";
-import { useVault } from "../context/vault";
 import { LTVProgress } from "@/lib/components";
 import { getGradientColorForLTV } from "@/lib/utils/color";
+import { useVault } from "../context/vault";
 
 const LTV = () => {
   const { vault, projectedState } = useVault();

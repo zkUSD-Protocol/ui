@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import { Button, Separator } from "@/lib/components/ui";
 import { useAccount } from "@/lib/context/account";
 import { formatDisplayAccount, formatMinaAmount } from "@/lib/utils/formatting";

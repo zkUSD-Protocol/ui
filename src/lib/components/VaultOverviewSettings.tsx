@@ -1,18 +1,17 @@
-import React from "react";
-import { Card, Button } from "./ui";
+import { useVaultManager } from "@/lib/context/vault-manager";
+import { useRouter } from "next/navigation";
+import { useVault } from "../context/vault";
+import { Button, Card } from "./ui";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "./ui/dialog";
-import { useVaultManager } from "@/lib/context/vault-manager";
-import { useRouter } from "next/navigation";
-import { useVault } from "../context/vault";
 
 const VaultOverviewSettings = () => {
   const { vault } = useVault();
