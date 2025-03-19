@@ -14,4 +14,6 @@ export { default as LTV } from "./LTV";
 export { default as LTVProgress } from "./LTVProgress";
 export { default as HealthFactor } from "./HealthFactor";
 export { default as VaultActions } from "./VaultActions";
+export { default as LandingHeader } from "./LandingHeader";
 export { default as ProjectedInfo } from "./ProjectedInfo";
+export { default as LandingHero } from "./LandingHero";

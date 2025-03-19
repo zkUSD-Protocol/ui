@@ -23,7 +23,7 @@ const VaultOverviewSettings = () => {
 
   const handleRemoveVault = () => {
     removeVaultAddress(vault?.vaultAddress);
-    router.push("/");
+    router.push("/app");
   };
 
   return (

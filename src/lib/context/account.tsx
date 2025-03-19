@@ -90,7 +90,7 @@ export const AccountProvider = ({
   const disconnect = () => {
     setAccount(null);
     sessionStorage.setItem("wallet-connected", "false");
-    router.push("/connect");
+    router.push("/app/connect");
   };
 
   // Auto-connect on mount
@@ -101,7 +101,7 @@ export const AccountProvider = ({
       connect().catch(console.error);
     } else {
       setAccountInitialized(true);
-      router.push("/");
+      router.push("/app");
     }
   }, [zkusd]);
 

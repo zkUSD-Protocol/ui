@@ -187,7 +187,7 @@ export function VaultManagerProvider({
             setVaultAddresses((prev) =>
               Array.from(new Set([...(prev || []), vaultAddress]))
             );
-            router.push(`/vault/${vaultAddress}`);
+            router.push(`/app/vault/${vaultAddress}`);
             await refetchAccount();
           }
         }

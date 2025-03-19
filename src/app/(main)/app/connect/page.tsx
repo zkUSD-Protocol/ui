@@ -16,7 +16,7 @@ const ConnectPage = () => {
       await connect();
       setIsConnectingWalletOpen(true);
       // Navigate immediately after a successful connection
-      router.push("/onboarding"); // or wherever you want to route the user
+      router.push("/app/onboarding"); // or wherever you want to route the user
     } catch (error) {
       if (
         error instanceof Error &&
