@@ -34,7 +34,7 @@ export const AccountProvider = ({
 
   const { refetch: refetchAccountState } = useAccountState(
     account?.toBase58() ?? "",
-    zkusd?.getTokenId("token") ?? 0,
+    zkusd?.getTokenId("token") ?? 0
   );
 
   const refetchAccount = async () => {
@@ -101,7 +101,7 @@ export const AccountProvider = ({
       connect().catch(console.error);
     } else {
       setAccountInitialized(true);
-      router.push("/app");
+      router.push("/");
     }
   }, [zkusd]);
 

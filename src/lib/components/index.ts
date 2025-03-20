@@ -17,3 +17,7 @@ export { default as VaultActions } from "./VaultActions";
 export { default as LandingHeader } from "./LandingHeader";
 export { default as ProjectedInfo } from "./ProjectedInfo";
 export { default as LandingHero } from "./LandingHero";
+export { default as LandingLeverage } from "./LandingLeverage";
+export { default as LandingFeatures } from "./LandingFeatures";
+export { default as LandingFooter } from "./LandingFooter";
+export { default as LandingNav } from "./LandingNav";

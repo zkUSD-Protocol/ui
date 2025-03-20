@@ -1,5 +1,5 @@
 import React from "react";
-import { ConnectWallet } from "@/lib/components";
+import { ConnectWallet, LandingNav } from "@/lib/components";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "./ui";
@@ -19,6 +19,7 @@ const LandingHeader = () => {
           />
         </Link>
       </div>
+      <LandingNav />
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => router.push("/app/connect")}>
           Launch App
