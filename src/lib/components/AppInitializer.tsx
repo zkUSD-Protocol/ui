@@ -27,8 +27,8 @@ export default function AppInitializer({ children }: AppInitializerProps) {
   const defaultRoute = !isConnected
     ? "/app/connect"
     : !vaultAddresses || vaultAddresses.length === 0
-    ? "/onboarding"
-    : `/vault/${vaultAddresses[0]}`;
+    ? "/app/onboarding"
+    : `/app/vault/${vaultAddresses[0]}`;
 
   // Determine if the current pathname is valid.
   const validRoute =
