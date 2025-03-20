@@ -19,7 +19,9 @@ const LandingHeader = () => {
           />
         </Link>
       </div>
-      <LandingNav />
+      <div className="hidden sm:block">
+        <LandingNav />
+      </div>
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => router.push("/app/connect")}>
           Launch App

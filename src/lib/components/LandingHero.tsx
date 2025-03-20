@@ -3,23 +3,23 @@ import Image from "next/image";
 
 const LandingHero = () => {
   return (
-    <div className="flex ">
-      <div className="w-2/3 pr-24">
-        <h1 className="font-serif text-6xl font-thin italic leading-[81px]">
+    <div className="flex flex-col-reverse sm:flex-row">
+      <div className="w-full sm:w-2/3 sm:pr-24">
+        <h1 className="text-center sm:text-left font-serif text-4xl sm:text-6xl font-thin italic leading-[51px] sm:leading-[81px]">
           Mina's Native Stablecoin Protocol
         </h1>
-        <p className="font-sans text-muted-foreground text-lg font-light leading-[24px]">
+        <p className="text-center sm:text-left font-sans text-muted-foreground text-lg font-light leading-[24px]">
           A decentralised, zkApp-native algorithmic stablecoin built for Mina.
           Catalysing the zk DeFi revolution.
         </p>
       </div>
-      <div className="w-1/3">
-        <div className="flex items-center justify-center">
+      <div className="w-full sm:w-1/3 flex justify-center items-center">
+        <div className="relative  w-32 h-32 sm:w-full sm:h-full mb-10 sm:mb-0">
           <Image
             src="/assets/hero_pn.png"
             alt="Landing Hero"
-            width={300}
-            height={300}
+            fill
+            objectFit="contain"
           />
         </div>
       </div>

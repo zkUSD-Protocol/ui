@@ -5,8 +5,8 @@ import { ChartLine, Eye, Mountain, Shield, Vault, Zap } from "lucide-react";
 const LandingFeatures = () => {
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex gap-8">
-        <Card className="p-8 w-1/2">
+      <div className="flex flex-col sm:flex-row gap-8">
+        <Card className="p-8 w-full sm:w-1/2">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
@@ -20,7 +20,7 @@ const LandingFeatures = () => {
             </p>
           </div>
         </Card>
-        <Card className="p-8 w-1/2">
+        <Card className="p-8 w-full sm:w-1/2">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
@@ -35,8 +35,8 @@ const LandingFeatures = () => {
           </div>
         </Card>
       </div>
-      <div className="flex gap-8">
-        <Card className="p-8 w-1/2">
+      <div className="flex flex-col sm:flex-row gap-8">
+        <Card className="p-8 w-full sm:w-1/2">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
@@ -50,7 +50,7 @@ const LandingFeatures = () => {
             </p>
           </div>
         </Card>
-        <Card className="p-8 w-1/2">
+        <Card className="p-8 w-full sm:w-1/2">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
