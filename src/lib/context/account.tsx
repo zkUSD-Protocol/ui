@@ -34,7 +34,7 @@ export const AccountProvider = ({
 
   const { refetch: refetchAccountState } = useAccountState(
     account?.toBase58() ?? "",
-    zkusd?.getTokenId("token") ?? 0,
+    zkusd?.getTokenId("token") ?? 0
   );
 
   const refetchAccount = async () => {
@@ -90,7 +90,7 @@ export const AccountProvider = ({
   const disconnect = () => {
     setAccount(null);
     sessionStorage.setItem("wallet-connected", "false");
-    router.push("/connect");
+    router.push("/app/connect");
   };
 
   // Auto-connect on mount

@@ -25,22 +25,22 @@ export default function AppInitializer({ children }: AppInitializerProps) {
 
   // Define the default route based on the state.
   const defaultRoute = !isConnected
-    ? "/connect"
+    ? "/app/connect"
     : !vaultAddresses || vaultAddresses.length === 0
-      ? "/onboarding"
-      : `/vault/${vaultAddresses[0]}`;
+    ? "/onboarding"
+    : `/vault/${vaultAddresses[0]}`;
 
   // Determine if the current pathname is valid.
   const validRoute =
-    (!isConnected && pathname === "/connect") ||
+    (!isConnected && pathname === "/app/connect") ||
     (isConnected &&
       (!vaultAddresses || vaultAddresses.length === 0) &&
-      pathname === "/onboarding") ||
+      pathname === "/app/onboarding") ||
     (isConnected &&
       vaultAddresses &&
       vaultAddresses.length > 0 &&
-      pathname.startsWith("/vault/") &&
-      vaultAddresses.includes(pathname.split("/")[2]));
+      pathname.startsWith("/app/vault/") &&
+      vaultAddresses.includes(pathname.split("/")[3]));
 
   // If the app is ready but the route isn't valid, redirect to the default route.
   useEffect(() => {
@@ -48,8 +48,8 @@ export default function AppInitializer({ children }: AppInitializerProps) {
 
     // If the current vault path is one of the valid ones, don't redirect.
     if (
-      pathname.startsWith("/vault/") &&
-      vaultAddresses?.includes(pathname.split("/")[2])
+      pathname.startsWith("/app/vault/") &&
+      vaultAddresses?.includes(pathname.split("/")[3])
     ) {
       return;
     }
