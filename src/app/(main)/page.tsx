@@ -13,7 +13,7 @@ const Home = () => {
     <>
       <main className="min-h-screen flex flex-col py-8 px-6 justify-between">
         <LandingHeader />
-        <div className="flex flex-col flex-1 max-w-5xl mx-auto mt-32 gap-24">
+        <div className="flex flex-col flex-1 max-w-5xl mx-auto mt-16 sm:mt-32 gap-24">
           <LandingHero />
           <LandingLeverage />
           <LandingFeatures />

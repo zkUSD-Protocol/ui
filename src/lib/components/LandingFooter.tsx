@@ -26,13 +26,13 @@ const LandingFooter = () => {
         </p>
         <Link target="_blank" className="w-fit" href="https://docs.fizk.xyz/">
           <p className="font-mono font-light uppercase text-white text-sm tracking-[0.06em] hover:underline">
-            Documentation
+            Docs
           </p>
         </Link>
         <Link
           target="_blank"
           className="w-fit"
-          href="/assets/The Fizk Protocol - Whitepaper v0.1.pdf"
+          href="https://drive.google.com/file/d/1MINcUqeLzxskjdB8Cq2O38emFrjgVY0q/view?usp=sharing"
         >
           <p className="font-mono font-light uppercase text-white text-sm tracking-[0.06em] hover:underline">
             WhitePaper
