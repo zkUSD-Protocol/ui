@@ -1,5 +1,5 @@
-import { Metadata } from "next";
 import { Providers } from "@/lib/context";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Fizk - zkUSD Protocol",

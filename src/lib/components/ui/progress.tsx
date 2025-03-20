@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import * as ProgressPrimitive from "@radix-ui/react-progress";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/ui";
+import * as ProgressPrimitive from "@radix-ui/react-progress";
+import { type VariantProps, cva } from "class-variance-authority";
+import * as React from "react";
 
 const progressVariants = cva("relative w-full overflow-hidden ", {
   variants: {
@@ -34,7 +34,7 @@ const Progress = React.forwardRef<
       variant === "gradient"
         ? "bg-risk-gradient" // Full gradient always visible in background
         : "bg-primary/20",
-      className
+      className,
     )}
     {...props}
   >
@@ -43,7 +43,7 @@ const Progress = React.forwardRef<
         "h-full w-full flex-1 transition-all duration-300",
         variant === "gradient"
           ? "bg-white" // Semi-transparent overlay
-          : "bg-primary"
+          : "bg-primary",
       )}
       style={{
         transform:

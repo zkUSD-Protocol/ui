@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { ProofModel } from "@/lib/models/proof.model";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (!latestProof) {
       return NextResponse.json(
         { status: "error", message: "No proof found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
           Pragma: "no-cache",
           Expires: "0",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Error fetching latest proof:", error);
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

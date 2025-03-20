@@ -1,5 +1,5 @@
+import type { AggregateOraclePricesProof } from "@zkusd/core";
 import { Schema, model, models } from "mongoose";
-import { AggregateOraclePricesProof } from "@zkusd/core";
 
 interface IProof {
   blockHeight: number;
@@ -30,7 +30,7 @@ const ProofSchema = new Schema<IProof>(
   },
   {
     collection: "oracle_price_proofs",
-  }
+  },
 );
 
 // Prevent model recompilation error in development

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
 import {
-  VaultOverviewHeading,
   VaultOverviewCard,
+  VaultOverviewHeading,
   VaultOverviewSettings,
 } from "@/lib/components";
+import { useState } from "react";
 
 export type OpenSection = "overview" | "settings";
 

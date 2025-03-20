@@ -1,6 +1,6 @@
-import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/ui";
+import { type VariantProps, cva } from "class-variance-authority";
+import * as React from "react";
 
 const cardVariants = cva("rounded-lg border shadow", {
   variants: {
@@ -25,7 +25,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       className={cn(cardVariants({ variant, className }))}
       {...props}
     />
-  )
+  ),
 );
 Card.displayName = "Card";
 

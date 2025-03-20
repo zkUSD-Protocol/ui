@@ -1,8 +1,7 @@
-import React from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useVault } from "../context/vault";
 import { formatDisplayAccount } from "../utils/formatting";
-import { ArrowRight, ArrowLeft } from "lucide-react";
-import { OpenSection } from "./VaultOverview";
+import type { OpenSection } from "./VaultOverview";
 
 type VaultOverviewHeadingProps = {
   openSection: OpenSection;

@@ -1,8 +1,6 @@
-import { AccountUpdate, Field, PublicKey } from "o1js";
 import { useQuery } from "@tanstack/react-query";
-import { ZkUsdEngineContract, Vault, fetchMinaAccount } from "@zkusd/core";
-
-import { VaultState } from "../types/vault";
+import { fetchMinaAccount } from "@zkusd/core";
+import { Field, PublicKey } from "o1js";
 
 export function useAccountState(accountAddress: string, tokenId: string) {
   return useQuery({

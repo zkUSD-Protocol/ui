@@ -1,5 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useVaultManager } from "@/lib/context/vault-manager";
+import { Check, Copy } from "lucide-react";
+import type { PrivateKey } from "o1js";
+import { useEffect, useState } from "react";
 import { Button, Card } from "./ui";
 import {
   Dialog,
@@ -8,11 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "./ui/dialog";
-import { useVaultManager } from "@/lib/context/vault-manager";
-import { PrivateKey } from "o1js";
-import { Copy, Check } from "lucide-react";
 
 type CreateNewVaultProps = {
   open: boolean;

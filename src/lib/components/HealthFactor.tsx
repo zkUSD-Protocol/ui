@@ -1,6 +1,5 @@
-import React from "react";
-import { useVault } from "../context/vault";
 import { Gauge } from "@/lib/components/ui";
+import { useVault } from "../context/vault";
 import { getGaugeColorForHealthFactor } from "../utils/color";
 import { getHealthFactorRisk } from "../utils/loan";
 
@@ -20,7 +19,7 @@ const HealthFactor = () => {
               className="px-1 rounded-md my-auto"
               style={{
                 backgroundColor: getGaugeColorForHealthFactor(
-                  vault.currentHealthFactor
+                  vault.currentHealthFactor,
                 )
                   .replace("hsl", "hsla")
                   .replace(")", ", 0.3)"),

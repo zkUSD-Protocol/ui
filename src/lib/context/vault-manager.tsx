@@ -1,6 +1,16 @@
 "use client";
 
-import React, {
+import {
+  TransactionPhase,
+  type TransactionPhaseStatus,
+  type TransactionStatusNew,
+  ZkusdEngineTransactionType,
+  fetchMinaAccount,
+} from "@zkusd/core";
+import { useRouter } from "next/navigation";
+import { PrivateKey } from "o1js";
+import type React from "react";
+import {
   createContext,
   useCallback,
   useContext,
@@ -8,20 +18,9 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { PublicKey, PrivateKey, AccountUpdate, Field } from "o1js";
-import { useClient } from "./client";
-import {
-  TransactionPhase,
-  TransactionPhaseStatus,
-  TransactionStatusNew,
-  TxLifecycleStatus,
-  Vault,
-  ZkusdEngineTransactionType,
-  fetchMinaAccount,
-} from "@zkusd/core";
 import { useAccount } from "./account";
+import { useClient } from "./client";
 import { useTransactionStatus } from "./transaction-status";
-import { useRouter } from "next/navigation";
 
 interface VaultManagerContextProps {
   vaultAddresses: string[] | null;
@@ -39,7 +38,7 @@ interface StoredVaultData {
 const LOCAL_STORAGE_KEY = "zkusdVaults";
 
 const VaultManagerContext = createContext<VaultManagerContextProps | null>(
-  null
+  null,
 );
 
 export function VaultManagerProvider({
@@ -93,10 +92,10 @@ export function VaultManagerProvider({
           } catch {
             return null;
           }
-        })
+        }),
       );
       const filteredVaults = validVaults.filter(
-        (addr): addr is string => addr !== null
+        (addr): addr is string => addr !== null,
       );
 
       // Update localStorage if some vaults are no longer valid.
@@ -155,7 +154,7 @@ export function VaultManagerProvider({
 
       if (!minaAccount.account) {
         setTxError(
-          "Mina account not found, you probably need to fund your account"
+          "Mina account not found, you probably need to fund your account",
         );
         return;
       }
@@ -166,15 +165,15 @@ export function VaultManagerProvider({
 
       txHandle?.subscribeToLifecycle(
         async (lifecycle: TransactionStatusNew) => {
-          let phase: TransactionPhase = lifecycle.phase;
-          let status: TransactionPhaseStatus = lifecycle.status;
+          const phase: TransactionPhase = lifecycle.phase;
+          const status: TransactionPhaseStatus = lifecycle.status;
           if (txPhaseRef.current !== phase) {
             setTxPhase(phase);
           }
 
           if ((status === "FAILED" || status === "EXCEPTION") && !txError) {
             setTxError(
-              `Error during ${phase} phase, please check the console for more details!`
+              `Error during ${phase} phase, please check the console for more details!`,
             );
             console.error(lifecycle);
           }
@@ -185,21 +184,21 @@ export function VaultManagerProvider({
 
           if (phase === TransactionPhase.INCLUDED) {
             setVaultAddresses((prev) =>
-              Array.from(new Set([...(prev || []), vaultAddress]))
+              Array.from(new Set([...(prev || []), vaultAddress])),
             );
-            router.push(`/vault/${vaultAddress}`);
+            router.push(`/app/vault/${vaultAddress}`);
             await refetchAccount();
           }
-        }
+        },
       );
     },
-    [account, zkusd, setTxPhase, setTxError, setTxHash, txHash]
+    [account, zkusd, setTxPhase, setTxError, setTxHash, txHash],
   );
 
   // Remove a vault address from state.
   const removeVaultAddress = useCallback((vaultAddress: string) => {
     setVaultAddresses((prev) =>
-      prev ? prev.filter((addr) => addr !== vaultAddress) : []
+      prev ? prev.filter((addr) => addr !== vaultAddress) : [],
     );
   }, []);
 
@@ -221,7 +220,7 @@ export function VaultManagerProvider({
         throw error;
       }
     },
-    [account, zkusd]
+    [account, zkusd],
   );
 
   return (
@@ -244,7 +243,7 @@ export function useVaultManager() {
   const context = useContext(VaultManagerContext);
   if (!context) {
     throw new Error(
-      "useVaultManager must be used within a VaultManagerProvider"
+      "useVaultManager must be used within a VaultManagerProvider",
     );
   }
   return context;

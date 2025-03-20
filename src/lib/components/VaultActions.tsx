@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { ErrorMessage } from "@/lib/components";
 import {
   Button,
   Card,
@@ -8,14 +8,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/lib/components/ui";
-import { ErrorMessage } from "@/lib/components";
-import { formatMinaAmount, toRawMinaAmount } from "../utils/formatting";
-import { useAccount } from "../context/account";
-import { useVault } from "../context/vault";
-import { UInt64 } from "o1js";
-import { calculateHealthFactor, calculateLTV } from "../utils/loan";
-import { usePrice } from "../context/price";
 import { ZkusdEngineTransactionType } from "@zkusd/core";
+import { UInt64 } from "o1js";
+import { useEffect, useState } from "react";
+import { useAccount } from "../context/account";
+import { usePrice } from "../context/price";
+import { useVault } from "../context/vault";
+import { formatMinaAmount, toRawMinaAmount } from "../utils/formatting";
+import { calculateHealthFactor, calculateLTV } from "../utils/loan";
 
 interface ActionCardProps {
   action: ZkusdEngineTransactionType;
@@ -127,13 +127,13 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
     const projectedLTV = calculateLTV(
       projectedCollateralAmount,
       projectedDebtAmount,
-      minaPrice
+      minaPrice,
     );
 
     const projectedHealthFactor = calculateHealthFactor(
       projectedCollateralAmount,
       projectedDebtAmount,
-      minaPrice
+      minaPrice,
     );
 
     setProjectedState({
@@ -227,7 +227,7 @@ const ActionCard = ({ action, type }: ActionCardProps) => {
                 disabled={!!errMsg || isDisabled}
                 onClick={() =>
                   handleAction(
-                    actionConfig[action as keyof VaultActionTypes].handler
+                    actionConfig[action as keyof VaultActionTypes].handler,
                   )
                 }
               >

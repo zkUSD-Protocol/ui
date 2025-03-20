@@ -1,13 +1,13 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { VaultProvider } from "./vault";
 import { AccountProvider } from "./account";
+import { VaultProvider } from "./vault";
 
-import { VaultManagerProvider } from "./vault-manager";
 import { ClientProvider } from "./client";
 import { PriceProvider } from "./price";
 import { TransactionStatusProvider } from "./transaction-status";
+import { VaultManagerProvider } from "./vault-manager";
 
 interface ProviderProps {
   children: React.ReactNode;

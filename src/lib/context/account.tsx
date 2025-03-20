@@ -1,11 +1,11 @@
 "use client";
 
+import { fetchMinaAccount } from "@zkusd/core";
+import { useRouter } from "next/navigation";
 import { PublicKey } from "o1js";
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchMinaAccount } from "@zkusd/core";
-import { useClient } from "./client";
 import { useAccountState } from "../hooks/use-account-state";
-import { useRouter } from "next/navigation";
+import { useClient } from "./client";
 
 interface AccountContextProps {
   account: PublicKey | null;
@@ -90,7 +90,7 @@ export const AccountProvider = ({
   const disconnect = () => {
     setAccount(null);
     sessionStorage.setItem("wallet-connected", "false");
-    router.push("/connect");
+    router.push("/app/connect");
   };
 
   // Auto-connect on mount
