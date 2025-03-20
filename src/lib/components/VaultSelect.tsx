@@ -65,7 +65,7 @@ const VaultSelect = () => {
               <DropdownMenuGroup>
                 {vaultAddresses.map((address, index) => (
                   <Link
-                    href={`/vault/${address}`}
+                    href={`/app/vault/${address}`}
                     key={index}
                     className="cursor-pointer"
                   >
