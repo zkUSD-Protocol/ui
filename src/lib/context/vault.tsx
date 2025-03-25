@@ -62,7 +62,6 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
     setTxPhase,
     setTxError,
     setTxType,
-    resetTxStatus,
     setTxHash,
     txPhase,
     txError,
@@ -87,53 +86,57 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   /**
    * Consolidated helper that fetches the vault state and updates the local state.
    */
-  const updateVaultState = async (
-    vaultAddress: string,
-  ): Promise<VaultState> => {
-    if (!zkusd) {
-      throw new Error("Network is not initialized");
-    }
+  const updateVaultState = useCallback(
+    async (vaultAddress: string): Promise<VaultState> => {
+      if (!zkusd) {
+        throw new Error("Network is not initialized");
+      }
 
-    const vaultState = await zkusd.getVaultState(vaultAddress);
-    const collateralAmount = vaultState.collateralAmount.toBigInt();
-    const debtAmount = vaultState.debtAmount.toBigInt();
-    const owner = vaultState.owner?.toBase58() ?? "Not Found";
-    const currentLTV = calculateLTV(collateralAmount, debtAmount, minaPrice);
-    const currentHealthFactor = calculateHealthFactor(
-      collateralAmount,
-      debtAmount,
-      minaPrice,
-    );
+      const vaultState = await zkusd.getVaultState(vaultAddress);
+      const collateralAmount = vaultState.collateralAmount.toBigInt();
+      const debtAmount = vaultState.debtAmount.toBigInt();
+      const owner = vaultState.owner?.toBase58() ?? "Not Found";
+      const currentLTV = calculateLTV(collateralAmount, debtAmount, minaPrice);
+      const currentHealthFactor = calculateHealthFactor(
+        collateralAmount,
+        debtAmount,
+        minaPrice,
+      );
 
-    const newVaultState: VaultState = {
-      vaultAddress,
-      collateralAmount,
-      debtAmount,
-      owner,
-      currentLTV,
-      currentHealthFactor,
-    };
+      const newVaultState: VaultState = {
+        vaultAddress,
+        collateralAmount,
+        debtAmount,
+        owner,
+        currentLTV,
+        currentHealthFactor,
+      };
 
-    setVault(newVaultState);
-    return newVaultState;
-  };
+      setVault(newVaultState);
+      return newVaultState;
+    },
+    [zkusd, minaPrice],
+  );
 
   /**
    * Initializes the vault by fetching and setting its state.
    */
-  const initVault = async (vaultAddress: string): Promise<VaultState> => {
-    try {
-      return await updateVaultState(vaultAddress);
-    } catch (error) {
-      console.error("Error initializing vault:", error);
-      throw error;
-    }
-  };
+  const initVault = useCallback(
+    async (vaultAddress: string): Promise<VaultState> => {
+      try {
+        return await updateVaultState(vaultAddress);
+      } catch (error) {
+        console.error("Error initializing vault:", error);
+        throw error;
+      }
+    },
+    [updateVaultState],
+  );
 
   /**
    * Refetches the vault state using the current vault address.
    */
-  const refetchVault = async () => {
+  const refetchVault = useCallback(async () => {
     if (!vault?.vaultAddress) return;
     try {
       await updateVaultState(vault.vaultAddress);
@@ -141,7 +144,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Error refetching vault:", error);
       throw error;
     }
-  };
+  }, [vault?.vaultAddress, updateVaultState]);
 
   const getMinaPriceInput = useCallback(async (): Promise<MinaPriceInput> => {
     const { data: latestProof } = await refetchLatestProof();
@@ -221,7 +224,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [txHash, setTxPhase, setTxType, setTxError, refetchVault, zkusd, setTxHash],
+    [txError, setTxPhase, setTxType, setTxError, refetchVault, setTxHash],
   );
 
   /**

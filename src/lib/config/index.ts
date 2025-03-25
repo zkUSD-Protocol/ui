@@ -1,13 +1,22 @@
-import { http } from "vimina";
-import { devnet, mainnet } from "vimina/chains";
+import { http, type Chain } from "vimina";
+import { devnet, lightnet, mainnet } from "vimina/chains";
 import { createConfig } from "wagmina";
 
-const chain = process.env.NEXT_PUBLIC_CHAIN === "mainnet" ? mainnet : devnet;
+const chainMap = {
+  mainnet: mainnet,
+  devnet: devnet,
+  lightnet: lightnet,
+};
+
+export const chain = chainMap[
+  process.env.NEXT_PUBLIC_CHAIN as keyof typeof chainMap
+] as Chain;
 
 export const config = createConfig({
-  chains: [chain],
+  chains: [mainnet, devnet, lightnet],
   transports: {
     [mainnet.id]: http(),
     [devnet.id]: http(),
+    [lightnet.id]: http(),
   },
 });

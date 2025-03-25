@@ -2,8 +2,15 @@
 import { ErrorMessage } from "@/lib/components";
 import ConnectingWallet from "@/lib/components/ConnectingWallet";
 import { Button, Card } from "@/lib/components/ui";
-import { useMemo, useState } from "react";
-import { useConnect, useConnectors } from "wagmina";
+import { chain } from "@lib/config";
+import { useCallback, useMemo, useState } from "react";
+import {
+  useAccount,
+  useConnect,
+  useConnectors,
+  useNetworkId,
+  useSwitchChain,
+} from "wagmina";
 
 const ConnectPage = () => {
   const { connectAsync: wagminaConnectAsync } = useConnect();
@@ -13,15 +20,33 @@ const ConnectPage = () => {
     [connectors],
   );
 
+  const { status: connectionStatus, isConnected } = useAccount();
+  const { switchChain, status: switchChainStatus } = useSwitchChain();
+  const networkId = useNetworkId();
+
   const [isConnectingWalletOpen, setIsConnectingWalletOpen] = useState(false);
-  const handleConnect = async () => {
-    if (auroWalletConnector) {
-      setIsConnectingWalletOpen(true);
-      wagminaConnectAsync({
-        connector: auroWalletConnector,
-      }).finally(() => setIsConnectingWalletOpen(false));
+  const handleConnect = useCallback(async () => {
+    if (connectionStatus === "disconnected") {
+      if (auroWalletConnector) {
+        setIsConnectingWalletOpen(true);
+        wagminaConnectAsync({
+          connector: auroWalletConnector,
+        }).finally(() => setIsConnectingWalletOpen(false));
+      }
     }
-  };
+    if (networkId !== chain.id && switchChainStatus !== "pending") {
+      switchChain({
+        networkId: chain.id,
+      });
+    }
+  }, [
+    connectionStatus,
+    auroWalletConnector,
+    wagminaConnectAsync,
+    networkId,
+    switchChainStatus,
+    switchChain,
+  ]);
 
   return (
     <>
@@ -37,7 +62,7 @@ const ConnectPage = () => {
               </p>
               {auroWalletConnector ? (
                 <Button className="w-fit" onClick={handleConnect}>
-                  Connect Wallet
+                  {isConnected ? "Switch Network" : "Connect Wallet"}
                 </Button>
               ) : (
                 <ErrorMessage
