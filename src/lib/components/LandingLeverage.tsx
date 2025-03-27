@@ -18,7 +18,7 @@ const LandingLeverage = () => {
           <div className="flex justify-center sm:justify-start">
             <Link
               target="_blank"
-              href="https://drive.google.com/file/d/1MINcUqeLzxskjdB8Cq2O38emFrjgVY0q/view?usp=sharing"
+              href="https://github.com/zkUSD-Protocol/whitepaper"
               className="w-fit"
             >
               <Button variant="outline">

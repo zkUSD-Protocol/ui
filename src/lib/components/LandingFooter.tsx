@@ -32,7 +32,7 @@ const LandingFooter = () => {
         <Link
           target="_blank"
           className="w-fit"
-          href="https://drive.google.com/file/d/1MINcUqeLzxskjdB8Cq2O38emFrjgVY0q/view?usp=sharing"
+          href="https://github.com/zkUSD-Protocol/whitepaper"
         >
           <p className="font-mono font-light uppercase text-white text-sm tracking-[0.06em] hover:underline">
             WhitePaper
