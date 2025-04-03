@@ -1,12 +1,12 @@
 // AppInitializer.tsx
 "use client";
-
-import { useAccount } from "@/lib/context/account";
 import { useClient } from "@/lib/context/client";
 import { useVaultManager } from "@/lib/context/vault-manager";
+import { chain } from "@lib/config";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import FadeLoader from "react-spinners/FadeLoader";
+import { useAccount, useNetworkId } from "wagmina";
 
 interface AppInitializerProps {
   children: React.ReactNode;
@@ -17,50 +17,38 @@ export default function AppInitializer({ children }: AppInitializerProps) {
   const pathname = usePathname();
 
   const { zkusd } = useClient();
-  const { accountInitialized, isConnected } = useAccount();
-  const { vaultAddresses, vaultsLoaded } = useVaultManager();
+  const { vaultAddresses } = useVaultManager();
+  const { isConnected } = useAccount();
+  const networkId = useNetworkId();
 
-  // App is ready when all async pieces are loaded.
-  const appReady = zkusd && accountInitialized && vaultsLoaded;
-
-  // Define the default route based on the state.
-  const defaultRoute = !isConnected
-    ? "/app/connect"
-    : !vaultAddresses || vaultAddresses.length === 0
-    ? "/app/onboarding"
-    : `/app/vault/${vaultAddresses[0]}`;
-
-  // Determine if the current pathname is valid.
-  const validRoute =
-    (!isConnected && pathname === "/app/connect") ||
-    (isConnected &&
-      (!vaultAddresses || vaultAddresses.length === 0) &&
-      pathname === "/app/onboarding") ||
-    (isConnected &&
-      vaultAddresses &&
-      vaultAddresses.length > 0 &&
-      pathname.startsWith("/app/vault/") &&
-      vaultAddresses.includes(pathname.split("/")[3]));
-
-  // If the app is ready but the route isn't valid, redirect to the default route.
+  const [isValidRoute, setIsValidRoute] = useState(false);
   useEffect(() => {
-    if (!appReady) return;
-
-    // If the current vault path is one of the valid ones, don't redirect.
-    if (
-      pathname.startsWith("/app/vault/") &&
-      vaultAddresses?.includes(pathname.split("/")[3])
-    ) {
+    if (!isConnected || networkId !== chain.id) {
+      if (pathname !== "/app/connect") {
+        router.push("/app/connect");
+        return;
+      }
+      setIsValidRoute(true);
       return;
     }
-
-    if (!validRoute) {
-      router.replace(defaultRoute);
+    if (!zkusd || vaultAddresses === null) return;
+    if (
+      (pathname.startsWith("/app/vault/") &&
+        vaultAddresses.includes(pathname.split("/")[3])) ||
+      (vaultAddresses.length === 0 && pathname === "/app/onboarding")
+    ) {
+      setIsValidRoute(true);
+      return;
     }
-  }, [appReady, pathname, defaultRoute, router, vaultAddresses, validRoute]);
+    router.replace(
+      vaultAddresses.length === 0
+        ? "/app/onboarding"
+        : `/app/vault/${vaultAddresses[0]}`,
+    );
+  }, [isConnected, networkId, pathname, router, zkusd, vaultAddresses]);
 
   // Show a loading spinner until the app is ready and the current route is valid.
-  if (!appReady || !validRoute) {
+  if (!isValidRoute) {
     return (
       <div className="flex-1 items-center justify-center h-full w-full">
         <FadeLoader
