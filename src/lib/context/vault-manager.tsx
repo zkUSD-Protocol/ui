@@ -8,7 +8,7 @@ import {
   fetchMinaAccount,
 } from "@zkusd/core";
 import { useRouter } from "next/navigation";
-import { PrivateKey } from "o1js";
+import { PrivateKey, PublicKey } from "o1js";
 import type React from "react";
 import {
   createContext,
@@ -18,7 +18,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useAccount } from "./account";
+import { useAccount } from "wagmina";
 import { useClient } from "./client";
 import { useTransactionStatus } from "./transaction-status";
 
@@ -47,7 +47,7 @@ export function VaultManagerProvider({
   children: React.ReactNode;
 }) {
   const { zkusd } = useClient();
-  const { account, accountInitialized, refetchAccount } = useAccount();
+  const { address } = useAccount();
   const {
     setTxPhase,
     txPhase,
@@ -65,7 +65,8 @@ export function VaultManagerProvider({
   // Load vaults from localStorage when the account changes.
   useEffect(() => {
     async function loadVaults() {
-      if (!account) {
+      if (!zkusd) return;
+      if (!address) {
         setVaultAddresses([]);
         setVaultsLoaded(true);
         return;
@@ -80,15 +81,15 @@ export function VaultManagerProvider({
           parsed = {};
         }
       }
-      const accountKey = account.toBase58();
+      const accountKey = address;
       const accountVaults = parsed[accountKey] || [];
 
       // Validate that each stored vault exists on the current network.
       const validVaults = await Promise.all(
-        accountVaults.map(async (address) => {
+        accountVaults.map(async (vaultAddress) => {
           try {
-            const vaultAccount = await zkusd?.fetchVaultAccount(address);
-            return vaultAccount ? address : null;
+            const vaultAccount = await zkusd?.fetchVaultAccount(vaultAddress);
+            return vaultAccount ? vaultAddress : null;
           } catch {
             return null;
           }
@@ -103,15 +104,15 @@ export function VaultManagerProvider({
         const updatedStorage = { ...parsed, [accountKey]: filteredVaults };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedStorage));
       }
-      setVaultAddresses(filteredVaults);
+      setVaultAddresses(accountVaults);
       setVaultsLoaded(true);
     }
     loadVaults();
-  }, [account, accountInitialized, zkusd]);
+  }, [address, zkusd]);
 
   // Sync vaultAddresses state to localStorage whenever it changes.
   useEffect(() => {
-    if (!account) return;
+    if (!address || vaultAddresses === null) return;
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     let parsed: StoredVaultData = {};
     if (stored) {
@@ -121,9 +122,9 @@ export function VaultManagerProvider({
         console.error("Error parsing localStorage vaults:", error);
       }
     }
-    parsed[account.toBase58()] = vaultAddresses || [];
+    parsed[address] = vaultAddresses || [];
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
-  }, [vaultAddresses, account]);
+  }, [vaultAddresses, address]);
 
   useEffect(() => {
     txHashRef.current = txHash;
@@ -140,7 +141,7 @@ export function VaultManagerProvider({
   // Create a new vault and add its address to state.
   const createNewVault = useCallback(
     async (vaultPrivateKey: PrivateKey) => {
-      if (!account || !zkusd) return;
+      if (!address || !zkusd) return;
 
       setTxType(ZkusdEngineTransactionType.CREATE_VAULT);
 
@@ -149,7 +150,7 @@ export function VaultManagerProvider({
       setTxPhase(TransactionPhase.BUILDING);
 
       const minaAccount = await fetchMinaAccount({
-        publicKey: account,
+        publicKey: PublicKey.fromBase58(address),
       });
 
       if (!minaAccount.account) {
@@ -159,9 +160,13 @@ export function VaultManagerProvider({
         return;
       }
 
-      const txHandle = await zkusd?.createVault(account, vaultPrivateKey, {
-        extraSigners: [vaultPrivateKey],
-      });
+      const txHandle = await zkusd?.createVault(
+        PublicKey.fromBase58(address),
+        vaultPrivateKey,
+        {
+          extraSigners: [vaultPrivateKey],
+        },
+      );
 
       txHandle?.subscribeToLifecycle(
         async (lifecycle: TransactionStatusNew) => {
@@ -187,12 +192,20 @@ export function VaultManagerProvider({
               Array.from(new Set([...(prev || []), vaultAddress])),
             );
             router.push(`/app/vault/${vaultAddress}`);
-            await refetchAccount();
           }
         },
       );
     },
-    [account, zkusd, setTxPhase, setTxError, setTxHash, txHash],
+    [
+      address,
+      zkusd,
+      setTxPhase,
+      setTxError,
+      setTxHash,
+      setTxType,
+      txError,
+      router.push,
+    ],
   );
 
   // Remove a vault address from state.
@@ -205,10 +218,10 @@ export function VaultManagerProvider({
   // Import a vault address after verifying its existence and ownership.
   const importVaultAddress = useCallback(
     async (vaultAddress: string): Promise<string | void> => {
-      if (!account || !zkusd) return;
+      if (!address || !zkusd) return;
       try {
         const vaultState = await zkusd.getVaultState(vaultAddress);
-        if (vaultState.owner.toBase58() !== account.toBase58()) {
+        if (vaultState.owner.toBase58() !== address) {
           return "You are not the owner of this vault";
         }
         setVaultAddresses((prev) => {
@@ -220,7 +233,7 @@ export function VaultManagerProvider({
         throw error;
       }
     },
-    [account, zkusd],
+    [address, zkusd],
   );
 
   return (

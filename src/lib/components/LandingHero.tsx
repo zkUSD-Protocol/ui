@@ -9,8 +9,8 @@ const LandingHero = () => {
           Mina's Native Stablecoin Protocol
         </h1>
         <p className="text-center sm:text-left font-sans text-muted-foreground text-lg font-light leading-[24px]">
-          A decentralised, zkApp-native algorithmic stablecoin built for Mina.
-          Catalysing the zk DeFi revolution.
+          Introducing zkUSD: A decentralised, zkApp-native algorithmic
+          stablecoin built for Mina. Catalysing the zk DeFi revolution.
         </p>
       </div>
       <div className="w-full sm:w-1/3 flex justify-center items-center">

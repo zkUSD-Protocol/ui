@@ -9,7 +9,7 @@ import {
   ZkusdEngineTransactionType,
   oracleAggregationVk,
 } from "@zkusd/core";
-import { type UInt64, fetchLastBlock } from "o1js";
+import { PublicKey, type UInt64, fetchLastBlock } from "o1js";
 import {
   createContext,
   useCallback,
@@ -18,10 +18,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { useAccount } from "wagmina";
 import { useLatestProof } from "../hooks/use-latest-proof";
 import type { VaultState } from "../types";
 import { calculateHealthFactor, calculateLTV } from "../utils/loan";
-import { useAccount } from "./account";
 import { useClient } from "./client";
 import { usePrice } from "./price";
 import { useTransactionStatus } from "./transaction-status";
@@ -57,12 +57,11 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
   const { refetch: refetchLatestProof } = useLatestProof();
   const { zkusd } = useClient();
-  const { account, refetchAccount } = useAccount();
+  const { address } = useAccount();
   const {
     setTxPhase,
     setTxError,
     setTxType,
-    resetTxStatus,
     setTxHash,
     txPhase,
     txError,
@@ -87,53 +86,57 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
   /**
    * Consolidated helper that fetches the vault state and updates the local state.
    */
-  const updateVaultState = async (
-    vaultAddress: string,
-  ): Promise<VaultState> => {
-    if (!zkusd) {
-      throw new Error("Network is not initialized");
-    }
+  const updateVaultState = useCallback(
+    async (vaultAddress: string): Promise<VaultState> => {
+      if (!zkusd) {
+        throw new Error("Network is not initialized");
+      }
 
-    const vaultState = await zkusd.getVaultState(vaultAddress);
-    const collateralAmount = vaultState.collateralAmount.toBigInt();
-    const debtAmount = vaultState.debtAmount.toBigInt();
-    const owner = vaultState.owner?.toBase58() ?? "Not Found";
-    const currentLTV = calculateLTV(collateralAmount, debtAmount, minaPrice);
-    const currentHealthFactor = calculateHealthFactor(
-      collateralAmount,
-      debtAmount,
-      minaPrice,
-    );
+      const vaultState = await zkusd.getVaultState(vaultAddress);
+      const collateralAmount = vaultState.collateralAmount.toBigInt();
+      const debtAmount = vaultState.debtAmount.toBigInt();
+      const owner = vaultState.owner?.toBase58() ?? "Not Found";
+      const currentLTV = calculateLTV(collateralAmount, debtAmount, minaPrice);
+      const currentHealthFactor = calculateHealthFactor(
+        collateralAmount,
+        debtAmount,
+        minaPrice,
+      );
 
-    const newVaultState: VaultState = {
-      vaultAddress,
-      collateralAmount,
-      debtAmount,
-      owner,
-      currentLTV,
-      currentHealthFactor,
-    };
+      const newVaultState: VaultState = {
+        vaultAddress,
+        collateralAmount,
+        debtAmount,
+        owner,
+        currentLTV,
+        currentHealthFactor,
+      };
 
-    setVault(newVaultState);
-    return newVaultState;
-  };
+      setVault(newVaultState);
+      return newVaultState;
+    },
+    [zkusd, minaPrice],
+  );
 
   /**
    * Initializes the vault by fetching and setting its state.
    */
-  const initVault = async (vaultAddress: string): Promise<VaultState> => {
-    try {
-      return await updateVaultState(vaultAddress);
-    } catch (error) {
-      console.error("Error initializing vault:", error);
-      throw error;
-    }
-  };
+  const initVault = useCallback(
+    async (vaultAddress: string): Promise<VaultState> => {
+      try {
+        return await updateVaultState(vaultAddress);
+      } catch (error) {
+        console.error("Error initializing vault:", error);
+        throw error;
+      }
+    },
+    [updateVaultState],
+  );
 
   /**
    * Refetches the vault state using the current vault address.
    */
-  const refetchVault = async () => {
+  const refetchVault = useCallback(async () => {
     if (!vault?.vaultAddress) return;
     try {
       await updateVaultState(vault.vaultAddress);
@@ -141,9 +144,9 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Error refetching vault:", error);
       throw error;
     }
-  };
+  }, [vault?.vaultAddress, updateVaultState]);
 
-  const getMinaPriceInput = async (): Promise<MinaPriceInput> => {
+  const getMinaPriceInput = useCallback(async (): Promise<MinaPriceInput> => {
     const { data: latestProof } = await refetchLatestProof();
 
     if (!latestProof) {
@@ -170,7 +173,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
       proof: latestProof,
       verificationKey: oracleAggregationVk,
     });
-  };
+  }, [refetchLatestProof]);
 
   useEffect(() => {
     txHashRef.current = txHash;
@@ -213,7 +216,6 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (phase === TransactionPhase.INCLUDED) {
               await refetchVault();
-              await refetchAccount();
             }
           },
         );
@@ -222,16 +224,7 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [
-      txHash,
-      setTxPhase,
-      setTxType,
-      setTxError,
-      refetchVault,
-      refetchAccount,
-      zkusd,
-      setTxHash,
-    ],
+    [txError, setTxPhase, setTxType, setTxError, refetchVault, setTxHash],
   );
 
   /**
@@ -239,17 +232,21 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const depositCollateral = useCallback(
     async (amount: UInt64) => {
-      if (!vault?.vaultAddress || !account) return;
-
+      if (!vault?.vaultAddress || !address) return;
       try {
         executeVaultAction(ZkusdEngineTransactionType.DEPOSIT_COLLATERAL, () =>
-          zkusd?.depositCollateral(account, vault.vaultAddress, amount),
+          zkusd?.depositCollateral(
+            PublicKey.fromBase58(address),
+            vault.vaultAddress,
+            amount,
+          ),
         );
       } catch (error) {
+        console.error("Error depositing collateral", error);
         throw error;
       }
     },
-    [vault, account],
+    [vault, address, zkusd?.depositCollateral, executeVaultAction],
   );
 
   /**
@@ -257,32 +254,44 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const mintZkUsd = useCallback(
     async (amount: UInt64) => {
-      if (!vault?.vaultAddress || !account) return;
+      if (!vault?.vaultAddress || !address) return;
       try {
         setTxType(ZkusdEngineTransactionType.MINT_ZKUSD);
 
         const minaPriceInput = await getMinaPriceInput();
 
         executeVaultAction(ZkusdEngineTransactionType.MINT_ZKUSD, () =>
-          zkusd?.mintZkUsd(account, vault.vaultAddress, amount, minaPriceInput),
+          zkusd?.mintZkUsd(
+            PublicKey.fromBase58(address),
+            vault.vaultAddress,
+            amount,
+            minaPriceInput,
+          ),
         );
       } catch (error) {
         console.error("Error minting zkUSD", error);
         throw error;
       }
     },
-    [vault, account],
+    [
+      vault,
+      address,
+      executeVaultAction,
+      zkusd?.mintZkUsd,
+      getMinaPriceInput,
+      setTxType,
+    ],
   );
 
   const redeemCollateral = useCallback(
     async (amount: UInt64) => {
-      if (!vault?.vaultAddress || !account) return;
+      if (!vault?.vaultAddress || !address) return;
       try {
         const minaPriceInput = await getMinaPriceInput();
 
         executeVaultAction(ZkusdEngineTransactionType.REDEEM_COLLATERAL, () =>
           zkusd?.redeemCollateral(
-            account,
+            PublicKey.fromBase58(address),
             vault.vaultAddress,
             amount,
             minaPriceInput,
@@ -293,22 +302,32 @@ export const VaultProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
     },
-    [vault, account],
+    [
+      vault,
+      address,
+      executeVaultAction,
+      zkusd?.redeemCollateral,
+      getMinaPriceInput,
+    ],
   );
 
   const burnZkUsd = useCallback(
     async (amount: UInt64) => {
-      if (!vault?.vaultAddress || !account) return;
+      if (!vault?.vaultAddress || !address) return;
       try {
         executeVaultAction(ZkusdEngineTransactionType.BURN_ZKUSD, () =>
-          zkusd?.burnZkUsd(account, vault.vaultAddress, amount),
+          zkusd?.burnZkUsd(
+            PublicKey.fromBase58(address),
+            vault.vaultAddress,
+            amount,
+          ),
         );
       } catch (error) {
         console.error("Error burning zkUSD", error);
         throw error;
       }
     },
-    [vault, account],
+    [vault, address, executeVaultAction, zkusd?.burnZkUsd],
   );
 
   return (
