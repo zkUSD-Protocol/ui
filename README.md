@@ -1,4 +1,4 @@
-# zkUSD Protocol UI
+# Fizk Protocol UI
 
 The **zkUSD Protocol UI** provides the web-based graphical user interface for the **fizk protocol**, built with TypeScript and Next.js. It interacts seamlessly with the fizk protocol's `core` module, which contains smart contract logic and transaction management.
 
@@ -30,7 +30,7 @@ Specifically designed for Mina’s unique architecture, zkUSD protocol leverages
 - Native governance capabilities and DAO-driven upgradeability.
 - A roadmap incorporating multi-collateral options and real-world asset integrations.
 
-For an in-depth explanation, please refer to our [whitepaper (v0.1)](https://drive.google.com/file/d/1MINcUqeLzxskjdB8Cq2O38emFrjgVY0q/view).
+For an in-depth explanation, please refer to our [whitepaper](https://github.com/zkUSD-Protocol/whitepaper).
 
 ---
 
