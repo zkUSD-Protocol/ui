@@ -12,7 +12,7 @@
     -moz-appearance: textfield !important;
   }
   :root {
-    --background: 20 14.3% 4.1%;
+    --background: 20 14% 4%;
     --foreground: 0 0% 95%;
     --card: 0 0% 9%;
     --card-foreground: 0 0% 15%;
