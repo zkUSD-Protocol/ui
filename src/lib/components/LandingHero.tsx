@@ -14,9 +14,9 @@ const LandingHero = () => {
         </p>
       </div>
       <div className="w-full sm:w-1/3 flex justify-center items-center">
-        <div className="relative  w-32 h-32 sm:w-full sm:h-full mb-10 sm:mb-0">
+        <div className="relative  w-32 h-32 sm:w-full sm:h-full mb-10 sm:mb-0 scale-150">
           <Image
-            src="/assets/hero_pn.png"
+            src="/assets/Z_coin_new_BGND.webp"
             alt="Landing Hero"
             fill
             objectFit="contain"
