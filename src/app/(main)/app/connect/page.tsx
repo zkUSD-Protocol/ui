@@ -2,51 +2,46 @@
 import { ErrorMessage } from "@/lib/components";
 import ConnectingWallet from "@/lib/components/ConnectingWallet";
 import { Button, Card } from "@/lib/components/ui";
-import { chain } from "@lib/config";
-import { useCallback, useMemo, useState } from "react";
+import { network } from "@lib/config";
+import { useAppKit } from "@reown/appkit/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useAccount,
-  useConnect,
   useConnectors,
   useNetworkId,
   useSwitchChain,
 } from "wagmina";
 
 const ConnectPage = () => {
-  const { connectAsync: wagminaConnectAsync } = useConnect();
   const connectors = useConnectors();
   const auroWalletConnector = useMemo(
     () => connectors.find((c) => c.id === "com.aurowallet"),
     [connectors],
   );
 
-  const { status: connectionStatus, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { switchChain, status: switchChainStatus } = useSwitchChain();
   const networkId = useNetworkId();
 
   const [isConnectingWalletOpen, setIsConnectingWalletOpen] = useState(false);
+
+  const { open } = useAppKit();
+
+  useEffect(() => {
+    if (auroWalletConnector) {
+      open();
+    }
+  }, [auroWalletConnector, open]);
+
   const handleConnect = useCallback(async () => {
-    if (connectionStatus === "disconnected") {
-      if (auroWalletConnector) {
-        setIsConnectingWalletOpen(true);
-        wagminaConnectAsync({
-          connector: auroWalletConnector,
-        }).finally(() => setIsConnectingWalletOpen(false));
-      }
-    }
-    if (networkId !== chain.id && switchChainStatus !== "pending") {
+    if (networkId !== network.id && switchChainStatus !== "pending") {
       switchChain({
-        networkId: chain.id,
+        networkId: network.id,
       });
+    } else {
+      open();
     }
-  }, [
-    connectionStatus,
-    auroWalletConnector,
-    wagminaConnectAsync,
-    networkId,
-    switchChainStatus,
-    switchChain,
-  ]);
+  }, [open, networkId, switchChainStatus, switchChain]);
 
   return (
     <>
@@ -84,3 +79,5 @@ const ConnectPage = () => {
 };
 
 export default ConnectPage;
+
+// npm install @reown/appkit@^1.6.9 @reown/appkit-common@^1.6.9 @reown/appkit-core@^1.6.9 @reown/appkit-utils@^1.6.9 @reown/appkit-wallet@^1.6.9
