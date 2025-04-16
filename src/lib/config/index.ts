@@ -16,8 +16,8 @@ if (!projectId) {
 export const metadata = {
   name: "Fizk",
   description: "zkUSD Protocol",
-  url: "https://fizk.xyz/",
-  icons: [],
+  url: "https://devnet.fizk.xyz/",
+  icons: ["https://devnet.fizk.xyz/assets/favicon_fizk.png"],
 };
 
 const networkMap: {
