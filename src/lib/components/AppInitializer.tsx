@@ -2,7 +2,8 @@
 "use client";
 import { useClient } from "@/lib/context/client";
 import { useVaultManager } from "@/lib/context/vault-manager";
-import { chain } from "@lib/config";
+import { network } from "@lib/config";
+import { useAppKit } from "@reown/appkit/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import FadeLoader from "react-spinners/FadeLoader";
@@ -21,9 +22,10 @@ export default function AppInitializer({ children }: AppInitializerProps) {
   const { isConnected } = useAccount();
   const networkId = useNetworkId();
 
+  const { close } = useAppKit();
   const [isValidRoute, setIsValidRoute] = useState(false);
   useEffect(() => {
-    if (!isConnected || networkId !== chain.id) {
+    if (!isConnected || networkId !== network.id) {
       if (pathname !== "/app/connect") {
         router.push("/app/connect");
         return;
@@ -31,6 +33,7 @@ export default function AppInitializer({ children }: AppInitializerProps) {
       setIsValidRoute(true);
       return;
     }
+    close();
     if (!zkusd || vaultAddresses === null) return;
     if (
       (pathname.startsWith("/app/vault/") &&
@@ -45,7 +48,7 @@ export default function AppInitializer({ children }: AppInitializerProps) {
         ? "/app/onboarding"
         : `/app/vault/${vaultAddresses[0]}`,
     );
-  }, [isConnected, networkId, pathname, router, zkusd, vaultAddresses]);
+  }, [isConnected, networkId, pathname, router, zkusd, vaultAddresses, close]);
 
   // Show a loading spinner until the app is ready and the current route is valid.
   if (!isValidRoute) {

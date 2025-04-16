@@ -1,22 +1,50 @@
-import { http, type Chain } from "vimina";
-import { devnet, lightnet, mainnet } from "vimina/chains";
-import { createConfig } from "wagmina";
+import { WagminaAdapter, type WagminaAppKitNetwork } from "@wagmina/appkit";
+import {
+  minaDevnet,
+  minaLightnet,
+  minaMainnet,
+} from "@wagmina/appkit/networks";
+import { http } from "vimina";
 
-const chainMap = {
-  mainnet: mainnet,
-  devnet: devnet,
-  lightnet: lightnet,
+// Get projectId from https://cloud.reown.com
+export const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+
+if (!projectId) {
+  throw new Error("Project ID is not defined");
+}
+
+export const metadata = {
+  name: "Fizk",
+  description: "zkUSD Protocol",
+  url: "https://fizk.xyz/",
+  icons: [],
 };
 
-export const chain = chainMap[
-  process.env.NEXT_PUBLIC_CHAIN as keyof typeof chainMap
-] as Chain;
+const networkMap: {
+  [key: string]: WagminaAppKitNetwork;
+} = {
+  mainnet: minaMainnet,
+  devnet: minaDevnet,
+  lightnet: minaLightnet,
+};
 
-export const config = createConfig({
-  chains: [mainnet, devnet, lightnet],
+export const network =
+  networkMap[process.env.NEXT_PUBLIC_CHAIN as keyof typeof networkMap];
+
+export const networks: [WagminaAppKitNetwork, ...WagminaAppKitNetwork[]] = [
+  network,
+];
+
+//Set up the Wagmina Adapter (Config)
+export const wagminaAdapter = new WagminaAdapter({
+  projectId,
+  networks,
+  excludeWalletIds: ["co.pallad"],
   transports: {
-    [mainnet.id]: http(),
-    [devnet.id]: http(),
-    [lightnet.id]: http(),
+    [minaMainnet.id]: http(),
+    [minaDevnet.id]: http(),
+    [minaLightnet.id]: http(),
   },
 });
+
+export const config = wagminaAdapter.wagminaConfig;
