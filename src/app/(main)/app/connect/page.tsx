@@ -27,12 +27,6 @@ const ConnectPage = () => {
 
   const { open } = useAppKit();
 
-  useEffect(() => {
-    if (auroWalletConnector) {
-      open();
-    }
-  }, [auroWalletConnector, open]);
-
   const handleConnect = useCallback(async () => {
     if (networkId !== network.id && switchChainStatus !== "pending") {
       switchChain({
