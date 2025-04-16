@@ -16,6 +16,7 @@ const nextConfig = {
       };
       // config.optimization.minimizer = [];
     } else {
+      config.externals.push("pino-pretty"); // https://github.com/WalletConnect/walletconnect-monorepo/issues/4466#issuecomment-2520872647
       config.externals.push("o1js"); // https://nextjs.org/docs/app/api-reference/next-config-js/serverExternalPackages
     }
     return config;
