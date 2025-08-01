@@ -8,7 +8,7 @@ const LandingHero = () => {
         <h1 className="text-center sm:text-left font-serif text-4xl sm:text-6xl font-thin italic leading-[51px] sm:leading-[81px]">
           A Confidential Auditable Stablecoin Protocol
         </h1>
-        <p className="text-center sm:text-left font-sans text-muted-foreground text-lg font-light leading-[24px]">
+        <p className="text-center sm:text-left font-sans text-muted-foreground text-lg font-light leading-[24px] mt-5">
           Fizk is a decentralised, multi-chain stablecoin protocol that brings
           cash-like privacy to on-chain payments. Private by default, auditable
           on demand.
