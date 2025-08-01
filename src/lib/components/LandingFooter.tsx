@@ -17,18 +17,14 @@ const LandingFooter = () => {
           </Link>
         </div>
         <p className="font-sans text-muted-foreground text-sm tracking-[0.06em]">
-          Made with ❤️ on the Mina Protocol
+          Made with ❤️ by Fizk
         </p>
       </div>
       <div className="flex flex-col gap-3 flex-1">
         <p className="font-sans font-light text-muted-foreground text-sm tracking-[0.06em]">
           Protocol
         </p>
-        <Link target="_blank" className="w-fit" href="https://docs.fizk.xyz/">
-          <p className="font-mono font-light uppercase text-white text-sm tracking-[0.06em] hover:underline">
-            Docs
-          </p>
-        </Link>
+
         <Link
           target="_blank"
           className="w-fit"

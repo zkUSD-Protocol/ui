@@ -9,7 +9,7 @@ const LandingHeader = () => {
   const router = useRouter();
   return (
     <div className="flex justify-between items-center h-9">
-      <div className="relative w-20 h-5 ">
+      <div className="relative w-20 h-5">
         <Link href="/">
           <Image
             src="/assets/fizk.svg"
@@ -19,13 +19,8 @@ const LandingHeader = () => {
           />
         </Link>
       </div>
-      <div className="hidden sm:block">
+      <div className="hidden sm:block w-20 h-5">
         <LandingNav />
-      </div>
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => router.push("/app/connect")}>
-          Launch App
-        </Button>
       </div>
     </div>
   );

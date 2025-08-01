@@ -6,11 +6,12 @@ const LandingHero = () => {
     <div className="flex flex-col-reverse sm:flex-row">
       <div className="w-full sm:w-2/3 sm:pr-24">
         <h1 className="text-center sm:text-left font-serif text-4xl sm:text-6xl font-thin italic leading-[51px] sm:leading-[81px]">
-          Mina's Native Stablecoin Protocol
+          A Confidential Auditable Stablecoin Protocol
         </h1>
         <p className="text-center sm:text-left font-sans text-muted-foreground text-lg font-light leading-[24px]">
-          Introducing zkUSD: A decentralised, zkApp-native algorithmic
-          stablecoin built for Mina. Catalysing the zk DeFi revolution.
+          Fizk is a decentralised, multi-chain stablecoin protocol that brings
+          cash-like privacy to on-chain payments. Private by default, auditable
+          on demand.
         </p>
       </div>
       <div className="w-full sm:w-1/3 flex justify-center items-center">
