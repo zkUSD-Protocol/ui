@@ -1,4 +1,3 @@
-import { ConnectWallet } from "@/lib/components";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,9 +14,7 @@ const Header = () => {
           />
         </Link>
       </div>
-      <div className="flex items-center gap-4">
-        <ConnectWallet />
-      </div>
+      <div className="flex items-center gap-4">{/* <ConnectWallet /> */}</div>
     </div>
   );
 };

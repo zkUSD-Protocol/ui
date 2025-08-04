@@ -2,10 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { ClientProvider } from "./client";
-import { PriceProvider } from "./price";
-import { TransactionStatusProvider } from "./transaction-status";
-
 interface ProviderProps {
   children: React.ReactNode;
   initialState?: any;
@@ -15,12 +11,6 @@ const queryClient = new QueryClient();
 
 export function Providers({ children, initialState }: ProviderProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ClientProvider>
-        <TransactionStatusProvider>
-          <PriceProvider>{children}</PriceProvider>
-        </TransactionStatusProvider>
-      </ClientProvider>
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
