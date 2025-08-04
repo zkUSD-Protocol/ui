@@ -23,7 +23,6 @@
     "@radix-ui/react-tabs": "^1.1.2",
     "@reown/appkit": "^1.7.2",
     "@tanstack/react-query": "^5.63.0",
-    "@wagmina/appkit": "https://pkg.pr.new/DeMonkeyCoder/wagmina/@wagmina/appkit@9e34a19",
     "@zkusd/core": "^0.0.*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -36,9 +35,7 @@
     "react-gauge-component": "^1.2.64",
     "react-spinners": "^0.15.0",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7",
-    "vimina": "https://pkg.pr.new/DeMonkeyCoder/vimina@5b709d2",
-    "wagmina": "https://pkg.pr.new/DeMonkeyCoder/wagmina@6fe375a"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.26.7",
