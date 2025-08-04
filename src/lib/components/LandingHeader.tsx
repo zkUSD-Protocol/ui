@@ -1,5 +1,5 @@
 import React from "react";
-import { ConnectWallet, LandingNav } from "@/lib/components";
+import { LandingNav } from "@/lib/components";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "./ui";
