@@ -1,6 +1,15 @@
 import React from "react";
 import { Card } from "./ui";
-import { ChartLine, Eye, Mountain, Shield, Vault, Zap } from "lucide-react";
+import {
+  ChartLine,
+  EyeOff,
+  Mountain,
+  Shield,
+  Vault,
+  Zap,
+  ShieldPlus,
+  SendToBack,
+} from "lucide-react";
 
 const LandingFeatures = () => {
   return (
@@ -10,13 +19,13 @@ const LandingFeatures = () => {
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
-                Personal Vaults
+                Auditable
               </h1>
-              <Vault className="w-12 h-12 text-primary" />
+              <ShieldPlus className="w-12 h-12 text-primary" />
             </div>
             <p className="font-sans text-muted-foreground text-sm font-light leading-[24px]">
-              Open over-collateralised vaults with ETH, SUI, MINA & more. You
-              stay in full control.
+              Fizk employs innovative governance controlled audit capabilites
+              dettering illicit use without exposing routine activity
             </p>
           </div>
         </Card>
@@ -29,8 +38,8 @@ const LandingFeatures = () => {
               <Zap className="w-12 h-12 text-primary" />
             </div>
             <p className="font-sans text-muted-foreground text-sm font-light leading-[24px]">
-              Runs on a high-throughput zkRollup and bridges to every major L1.
-              Privacy for payments, Easy access for DeFi.
+              Utilises a unique zkRollup architecture to provide scalable
+              infrastructure secured through zkProofs
             </p>
           </div>
         </Card>
@@ -40,13 +49,12 @@ const LandingFeatures = () => {
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
-                zk-Native Oracles
+                Confidential
               </h1>
-              <Eye className="w-12 h-12 text-primary" />
+              <EyeOff className="w-12 h-12 text-primary" />
             </div>
             <p className="font-sans text-muted-foreground text-sm font-light leading-[24px]">
-              Robust observer network running inside of TEE's for a fast,
-              efficent and secure price feed.
+              Make payments without exposing your balance or transaction history
             </p>
           </div>
         </Card>
@@ -54,14 +62,13 @@ const LandingFeatures = () => {
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <h1 className="font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
-                Deep Liquidity
+                Seemless bridging
               </h1>
-              <ChartLine className="w-12 h-12 text-primary" />
+              <SendToBack className="w-12 h-12 text-primary" />
             </div>
             <p className="font-sans text-muted-foreground text-sm font-light leading-[24px]">
-              Bridge zkUSD to ETH, Sui, Solana and more to tap instantly into
-              the deepest DeFi pools—then hop back to the private layer whenever
-              you need.
+              Easily bridge USDC to Fizk and back to any supported L1. Powered
+              by Wormhole and CCTP.
             </p>
           </div>
         </Card>

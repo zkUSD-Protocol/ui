@@ -10,10 +10,11 @@ const LandingLeverage = () => {
       <div className="flex flex-col-reverse sm:flex-row justify-between gap-8 sm:gap-0">
         <div className="flex flex-col gap-4">
           <h1 className="text-center sm:text-left font-serif font-thin italic text-lg sm:text-3xl leading-[32px] tracking-tighter text-white">
-            Unlock liquidity without selling
+            Transact in private
           </h1>
           <p className="text-center sm:text-left font-sans text-muted-foreground text-sm font-light leading-[24px]">
-            Mint zkUSD against diverse crypto collateral and keep your upside.
+            Bridge USDC and USDT to Fizk and transact in private. How it should
+            be.
           </p>
           <div className="flex justify-center sm:justify-start">
             <Link
